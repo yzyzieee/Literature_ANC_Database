@@ -82,5 +82,31 @@
     "drive": [],
     "created": "2026-06-12",
     "summary": "The foundational paper on adaptive noise cancelling: a reference input correlated with the noise (but not the signal) is adaptively filtered and subtracted from the primary input, with the LMS algorithm driving the filter towards the Wiener solution without prior knowledge of signal statistics."
+  },
+  {
+    "slug": "xiao2025spatially",
+    "path": "pending/xiao2025spatially.md",
+    "folder": "pending",
+    "title": "Spatially Selective Active Noise Control for Open-Fitting Hearables with Acausal Optimization",
+    "type": "paper",
+    "domain": "active-noise-control",
+    "source_type": "conference",
+    "status": "pending",
+    "tags": [
+      "audio",
+      "noise-control",
+      "hearables",
+      "acausal-optimization"
+    ],
+    "authors": [
+      "Tong Xiao",
+      "Simon Doclo"
+    ],
+    "year": 2025,
+    "citation_key": "xiao2025spatially",
+    "related": [],
+    "drive": [],
+    "created": "2026-06-13",
+    "summary": "This paper proposes an enhanced approach to Spatially Selective Active Noise Control (SSANC) for open-fitting hearables. The core innovation is the incorporation of acausal relative impulse responses (ReIRs) into the optimization process, aiming to improve performance over existing causal methods. The system is evaluated through simulations using a KEMAR dummy head with open-fitting hearables, considering both speech and noise sources at various locations. Performance is measured by speech distortion, noise reduction, and signal-to-noise ratio (SNR) improvement. The results consistently demonstrate that the acausal optimization strategy yields superior performance across all metrics compared to the causal approach, particularly in accurately characterizing the desired source's acoustic path."
   }
 ]
