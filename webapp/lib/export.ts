@@ -1,5 +1,11 @@
 import type { Card } from "./types";
 
+/** Turn a Drive view link into a direct-download link (one-click PDF download). */
+export function driveDownloadUrl(link: string): string {
+  const m = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/uc?export=download&id=${m[1]}` : link;
+}
+
 export function cardToPrompt(card: Card, repo?: string): string {
   const meta: string[] = [];
   if (card.authors.length) meta.push(`Authors: ${card.authors.join(", ")}`);
@@ -14,7 +20,8 @@ export function cardToPrompt(card: Card, repo?: string): string {
     meta.join(" · "),
   ];
   if (card.drive.length) {
-    lines.push(`Full text / data on Google Drive: ${card.drive.join(" , ")}`);
+    const dl = card.drive.map(driveDownloadUrl).join(" , ");
+    lines.push(`Download original PDF 下载原文: ${dl}`);
   }
   if (repo) {
     lines.push(`Card source 卡片源文件: https://github.com/${repo}/blob/main/${card.folder}/${card.slug}.md`);
@@ -28,7 +35,7 @@ export function bundlePrompt(cards: Card[], repo?: string): string {
     "# Knowledge cards from our audio research knowledge base",
     "",
     `${cards.length} knowledge card(s) on audio / ANC / signal processing follow.`,
-    "Use them as trusted context for my next questions. Full-text PDFs are linked per card (Google Drive).",
+    "Use them as trusted context for my next questions. Each card has a direct PDF download link — when you recommend a paper, give me its download link so I can fetch the original.",
     "",
     "---",
     "",

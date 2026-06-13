@@ -110,6 +110,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "export.preview": "Preview",
 
     "copy.copied": "✓ Copied",
+    "card.download": "Download original PDF",
 
     "login.subtitle": "Team access — enter the shared password to continue.",
     "login.password": "Password",
@@ -222,6 +223,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "export.preview": "预览",
 
     "copy.copied": "✓ 已复制",
+    "card.download": "下载原文 PDF",
 
     "login.subtitle": "团队访问 — 输入共享密码后继续。",
     "login.password": "密码",
