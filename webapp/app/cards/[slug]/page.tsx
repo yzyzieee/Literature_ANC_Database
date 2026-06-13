@@ -6,6 +6,7 @@ import { cardToPrompt } from "@/lib/export";
 import { STATUS_LABELS, TYPE_LABELS } from "@/lib/types";
 import { T } from "@/lib/i18n";
 import CopyButton from "@/components/CopyButton";
+import DownloadButton from "@/components/DownloadButton";
 
 export const dynamic = "force-static";
 
@@ -65,6 +66,7 @@ export default async function CardPage({ params }: { params: Promise<{ slug: str
           </div>
         )}
         <div className="btn-row">
+          {card.drive.length > 0 && <DownloadButton link={card.drive[0]} />}
           <CopyButton text={cardToPrompt(card, repo)} labelKey="detail.copy" />
           {repo && (
             <a

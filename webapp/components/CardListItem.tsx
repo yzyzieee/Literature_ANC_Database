@@ -1,12 +1,20 @@
 import Link from "next/link";
 import type { CardMeta } from "@/lib/types";
 import { STATUS_LABELS, TYPE_LABELS, domainLabel } from "@/lib/types";
+import DownloadButton from "./DownloadButton";
 
 export default function CardListItem({ card }: { card: CardMeta }) {
   const cite = [card.authors[0], card.year].filter(Boolean).join(" · ");
   return (
     <Link href={`/cards/${card.slug}`} className="card-item">
-      <div className="titles">{card.title}</div>
+      <div className="titles">
+        {card.title}
+        {card.drive.length > 0 && (
+          <span className="dl-slot">
+            <DownloadButton link={card.drive[0]} compact />
+          </span>
+        )}
+      </div>
       {cite && <div className="cite">{cite}{card.authors.length > 1 ? " et al." : ""}</div>}
       {card.summary && <div className="excerpt">{card.summary.slice(0, 180)}</div>}
       <div className="meta-row">
