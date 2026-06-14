@@ -102,14 +102,22 @@ function validatedOfficialCard(
   const parsed = matter(content);
   const data = parsed.data as Record<string, unknown>;
   const entryType = String(data.entry_type || "");
-  const domain = String(data.domain || "");
+  const primaryDomain = String(data.primary_domain || "");
+  const domains = Array.isArray(data.domains) ? data.domains.map(String) : [];
   const publicationType = String(data.publication_type || "");
   const tags = Array.isArray(data.tags) ? data.tags : [];
   const errors: string[] = [];
 
   if (!String(data.title || "").trim()) errors.push("title");
   if (entryType !== "literature") errors.push("entry_type: literature");
-  if (!DOMAINS.includes(domain)) errors.push("valid domain");
+  if (!DOMAINS.includes(primaryDomain)) errors.push("valid primary domain");
+  if (
+    !domains.length ||
+    !domains.includes(primaryDomain) ||
+    domains.some((domain) => !DOMAINS.includes(domain))
+  ) {
+    errors.push("valid domains including the primary domain");
+  }
   if (!PUBLICATION_TYPES.includes(publicationType as (typeof PUBLICATION_TYPES)[number])) {
     errors.push("valid publication type");
   }
@@ -182,7 +190,7 @@ export async function POST(req: NextRequest) {
     content?: string;
     archive?: { name?: string; uploadedBy?: string; uploadedAt?: string; reused?: boolean } | null;
   };
-  if (!slug || !content || !/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+  if (!slug || !content || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(slug)) {
     return NextResponse.json({ error: "A valid slug and card content are required." }, { status: 400 });
   }
 

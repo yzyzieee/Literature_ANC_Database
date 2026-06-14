@@ -115,6 +115,13 @@ function parseCard(filePath: string, folder: string): Card | null {
     const legacySourceType = String(data.source_type ?? "");
     const entryType: EntryType =
       data.entry_type === "literature" || legacyType === "paper" ? "literature" : "legacy-note";
+    const legacyDomain = String(data.domain ?? "");
+    const primaryDomain = String(data.primary_domain ?? legacyDomain);
+    const domains = Array.isArray(data.domains)
+      ? data.domains.map(String)
+      : primaryDomain
+        ? [primaryDomain]
+        : [];
     const publicationTypeMap: Record<string, PublicationType> = {
       paper: "journal-paper",
       conference: "conference-paper",
@@ -130,7 +137,8 @@ function parseCard(filePath: string, folder: string): Card | null {
       publication_type: String(
         data.publication_type ?? publicationTypeMap[legacySourceType] ?? "",
       ) as PublicationType | "",
-      domain: String(data.domain ?? ""),
+      primary_domain: primaryDomain,
+      domains: [...new Set([primaryDomain, ...domains].filter(Boolean))],
       venue: String(data.venue ?? ""),
       doi: String(data.doi ?? ""),
       abstract: String(data.abstract ?? ""),

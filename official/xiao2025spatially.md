@@ -1,7 +1,8 @@
 ---
 title: "Spatially Selective Active Noise Control for Open-Fitting Hearables with Acausal Optimization"
 entry_type: literature
-domain: active-noise-control
+primary_domain: active-noise-control
+domains: [active-noise-control, spatial-audio, beamforming-arrays]
 publication_type: conference-paper
 venue: Forum Acusticum Euronoise 2025
 doi: 10.61782/fa.2025.0817

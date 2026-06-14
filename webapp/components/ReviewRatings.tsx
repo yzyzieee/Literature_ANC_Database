@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CardMeta, RatingAggregate, RatingEntry, TeamMember } from "@/lib/types";
-import { domainLabel } from "@/lib/types";
+import { cardMatchesDomain, domainLabel } from "@/lib/types";
 import { useLang } from "@/lib/i18n";
 import DownloadButton from "./DownloadButton";
 
@@ -68,7 +68,7 @@ function RatingCard({
             {card.authors.length > 1 ? " et al." : ""}
           </div>
           <div className="meta-row">
-            <span className="badge domain">{domainLabel(card.domain)}</span>
+            <span className="badge domain">{domainLabel(card.primary_domain)}</span>
             {card.tags.slice(0, 4).map((tag) => <span className="badge" key={tag}>#{tag}</span>)}
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
     if (!member) return [];
     return cards.filter(
       (card) =>
-        member.domains.includes(card.domain) &&
+        member.domains.some((domain) => cardMatchesDomain(card, domain)) &&
         !card.ratings.some((rating) => rating.reviewer === member.id),
     );
   }, [cards, member]);
@@ -148,7 +148,11 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
     return cards.filter((card) => card.ratings.some((rating) => rating.reviewer === member.id));
   }, [cards, member]);
   const domainCards = useMemo(
-    () => (member ? cards.filter((card) => member.domains.includes(card.domain)) : []),
+    () => (
+      member
+        ? cards.filter((card) => member.domains.some((domain) => cardMatchesDomain(card, domain)))
+        : []
+    ),
     [cards, member],
   );
   const recommended = useMemo(

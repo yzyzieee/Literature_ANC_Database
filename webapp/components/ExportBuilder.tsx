@@ -25,14 +25,14 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
     const f = filter.trim().toLowerCase();
     return cards.filter(
       (c) =>
-        (!domain || c.domain === domain) &&
+        (!domain || c.domains.includes(domain)) &&
         (!publicationType || c.publication_type === publicationType) &&
         (!f || c.title.toLowerCase().includes(f) || c.tags.some((tag) => tag.includes(f))),
     );
   }, [cards, domain, publicationType, filter]);
 
   const presentDomains = useMemo(
-    () => DOMAINS.filter((item) => cards.some((card) => card.domain === item)),
+    () => DOMAINS.filter((item) => cards.some((card) => card.domains.includes(item))),
     [cards],
   );
   const presentPublicationTypes = useMemo(
@@ -108,7 +108,7 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
             <span>
               <span className="titles">{c.title}</span>
               <span className="meta-row">
-                <span className="badge domain">{domainLabel(c.domain)}</span>
+                <span className="badge domain">{domainLabel(c.primary_domain)}</span>
                 {c.publication_type && (
                   <span className="badge type">{publicationTypeLabel(c.publication_type)}</span>
                 )}

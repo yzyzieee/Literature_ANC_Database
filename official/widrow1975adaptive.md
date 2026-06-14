@@ -1,7 +1,8 @@
 ---
 title: 'Adaptive noise cancelling: principles and applications'
 entry_type: literature
-domain: active-noise-control
+primary_domain: active-noise-control
+domains: [active-noise-control, fundamentals-dsp]
 publication_type: journal-paper
 venue: Proceedings of the IEEE
 doi: 10.1109/PROC.1975.10036

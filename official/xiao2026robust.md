@@ -1,7 +1,8 @@
 ---
 title: "Robust Soft-Constrained Spatially Selective Active Noise Control for Hearables Under Secondary Path Variations"
 entry_type: literature
-domain: active-noise-control
+primary_domain: active-noise-control
+domains: [active-noise-control, spatial-audio]
 publication_type: preprint
 venue: arXiv
 doi: 10.48550/arXiv.2605.17407

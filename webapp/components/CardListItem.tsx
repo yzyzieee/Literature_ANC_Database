@@ -18,7 +18,9 @@ export default function CardListItem({ card }: { card: CardMeta }) {
       {cite && <div className="cite">{cite}{card.authors.length > 1 ? " et al." : ""}</div>}
       {card.summary && <div className="excerpt">{card.summary.slice(0, 180)}</div>}
       <div className="meta-row">
-        {card.domain && <span className="badge domain">{domainLabel(card.domain)}</span>}
+        {card.primary_domain && (
+          <span className="badge domain">{domainLabel(card.primary_domain)}</span>
+        )}
         {card.publication_type && (
           <span className="badge type">{publicationTypeLabel(card.publication_type)}</span>
         )}

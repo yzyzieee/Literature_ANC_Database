@@ -12,7 +12,8 @@ export function cardToPrompt(card: Card, repo?: string): string {
   if (card.authors.length) meta.push(`Authors: ${card.authors.join(", ")}`);
   if (card.year) meta.push(`Year: ${card.year}`);
   if (card.publication_type) meta.push(`Publication type: ${publicationTypeLabel(card.publication_type)}`);
-  if (card.domain) meta.push(`Research domain: ${domainLabel(card.domain)}`);
+  if (card.primary_domain) meta.push(`Primary domain: ${domainLabel(card.primary_domain)}`);
+  if (card.domains.length) meta.push(`Research domains: ${card.domains.map(domainLabel).join(", ")}`);
   if (card.venue) meta.push(`Venue: ${card.venue}`);
   if (card.doi) meta.push(`DOI: ${card.doi}`);
   if (card.abstract) meta.push(`Abstract: ${card.abstract}`);

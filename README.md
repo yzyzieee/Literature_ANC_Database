@@ -14,7 +14,7 @@ exports trusted literature context for LLM-assisted research.
 
 1. Collect and normalize research PDFs.
 2. Extract publication metadata and structured reading records.
-3. Organize literature by research domain and publication type.
+3. Organize literature by one primary domain, optional cross-domains, and publication metadata.
 4. Capture team ratings, comments, provenance, and audit history.
 5. Export trusted records and direct PDF links to members' own LLM subscriptions.
 6. Avoid duplicate uploads and repeated reading through DOI, title, citation-key,
@@ -25,7 +25,7 @@ use `entry_type: literature`.
 
 ## Storage
 
-- Google Drive: original PDFs, grouped by `publication_type`.
+- Google Drive: a flat original-PDF repository using `NNNN_citationKey.pdf`.
 - GitHub `official/`: English Markdown literature records.
 - GitHub `team/`: team accounts and selected research domains.
 - GitHub `index/`: generated machine-readable and Markdown indexes.
@@ -36,7 +36,7 @@ use `entry_type: literature`.
 The primary metadata fields are:
 
 - `entry_type: literature`
-- `domain`
+- `primary_domain` and `domains`
 - `publication_type`
 - `venue`, `doi`, `citation_key`, `authors`, `year`
 - `tags`
@@ -48,10 +48,10 @@ reading template.
 
 ## Workflow
 
-1. Upload a PDF and generate a draft record.
-2. Verify title, authors, year, DOI, venue, domain, publication type, and tags.
+1. Choose a PDF, then explicitly start AI extraction to generate a draft record.
+2. Verify title, authors, year, DOI, venue, primary/cross-domains, publication type, and tags.
 3. Archive the PDF to Drive; the app numbers and renames it consistently.
-4. Gemini reads the archived original PDF to refresh the structured record.
+4. Optionally ask Gemini to re-read the archived original PDF.
 5. Publish directly to `official/`.
 6. Team members rate and comment from their domain-specific queues.
 7. Export selected records, comments, scores, and PDF links to an external LLM.

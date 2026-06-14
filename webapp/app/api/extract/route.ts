@@ -13,7 +13,13 @@ const LITERATURE_JSON_SCHEMA = {
   type: "object",
   properties: {
     entry_type: { type: "string", enum: ["literature"] },
-    domain: { type: "string", enum: DOMAINS },
+    primary_domain: { type: "string", enum: DOMAINS },
+    domains: {
+      type: "array",
+      items: { type: "string", enum: DOMAINS },
+      minItems: 1,
+      uniqueItems: true,
+    },
     publication_type: { type: "string", enum: PUBLICATION_TYPES },
     title: { type: "string" },
     authors: { type: "array", items: { type: "string" } },
@@ -27,7 +33,8 @@ const LITERATURE_JSON_SCHEMA = {
   },
   required: [
     "entry_type",
-    "domain",
+    "primary_domain",
+    "domains",
     "publication_type",
     "title",
     "authors",
@@ -48,7 +55,8 @@ function buildSystem(fromOriginal: boolean): string {
       ? "You read the original PDF, including figures, equations, and tables, for an audio research group's literature hub."
       : "You process extracted document text for an audio research group's literature hub.",
     "Produce one structured English literature record. entry_type must always be literature.",
-    `Allowed domains (pick the single best fit): ${DOMAINS.join(", ")}. Use other only if none fit.`,
+    `Allowed research domains: ${DOMAINS.join(", ")}.`,
+    "Choose one primary_domain for filing and statistics. Also return domains as all genuinely relevant research domains, including primary_domain. Avoid weak or speculative cross-domain labels.",
     `Allowed publication_type values: ${PUBLICATION_TYPES.join(", ")}.`,
     "Classify journal articles, conference papers, preprints, review papers, books, chapters, patents, theses, technical reports, and dataset papers carefully.",
     "Extract venue, DOI, year, authors, and the paper's abstract when present. Use an empty string rather than inventing missing metadata.",
@@ -134,7 +142,13 @@ function normalizedTag(value: unknown): string {
 }
 
 function shapeLiterature(record: Record<string, unknown>) {
-  const domain = DOMAINS.includes(String(record.domain)) ? String(record.domain) : "other";
+  const primaryDomain = DOMAINS.includes(String(record.primary_domain))
+    ? String(record.primary_domain)
+    : "other";
+  const domains = Array.isArray(record.domains)
+    ? [...new Set(record.domains.map(String).filter((domain) => DOMAINS.includes(domain)))]
+    : [];
+  if (!domains.includes(primaryDomain)) domains.unshift(primaryDomain);
   const publicationType = PUBLICATION_TYPES.includes(String(record.publication_type) as never)
     ? String(record.publication_type)
     : "other";
@@ -151,7 +165,8 @@ function shapeLiterature(record: Record<string, unknown>) {
 
   const shaped = {
     entry_type: "literature",
-    domain,
+    primary_domain: primaryDomain,
+    domains,
     publication_type: publicationType,
     title: String(record.title ?? ""),
     authors: Array.isArray(record.authors) ? record.authors.map(String) : [],

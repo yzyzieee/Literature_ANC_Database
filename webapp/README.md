@@ -5,12 +5,13 @@ Markdown records in the parent repository remain the source of truth.
 
 ## Main workflows
 
-- **Literature library**: fuzzy search plus domain, publication type, year, venue,
-  rating state, team weight, and uploader filters.
-- **New literature**: upload a PDF, extract metadata, choose domain and publication
-  type, archive the original to Drive, and publish a structured record.
-- **Original-PDF analysis**: after Drive upload, Gemini reads the original PDF,
-  including figures, equations, and tables.
+- **Literature library**: fuzzy search plus domain and relative-year filters.
+- **New literature**: choose a PDF, explicitly start AI extraction, select one
+  primary domain and any cross-domains, then publish a structured record.
+- **Flat PDF archive**: Drive stores globally numbered `NNNN_citationKey.pdf`
+  originals; all classification remains in card metadata.
+- **Original-PDF analysis**: after Drive upload, members may explicitly ask
+  Gemini to re-read the original PDF, including figures, equations, and tables.
 - **Duplicate prevention**: citation key, DOI, normalized title, and Drive metadata.
 - **Ratings**: personal domain queue, history, recommended, innovative, rigorous,
   and disputed literature views.

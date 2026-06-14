@@ -16,9 +16,27 @@ function yamlList(items: string[]): string {
   return items.length ? `[${items.map((item) => JSON.stringify(item)).join(", ")}]` : "[]";
 }
 
+type BusyAction = "" | "doi" | "draft" | "commit" | "extract" | "drive" | "original";
+
+interface ExtractedLiterature {
+  primary_domain?: string;
+  domains?: string[];
+  publication_type?: string;
+  title?: string;
+  authors?: string[];
+  year?: number | null;
+  venue?: string;
+  doi?: string;
+  abstract?: string;
+  citation_key?: string;
+  tags?: string[];
+  body?: string;
+}
+
 export default function NewLiteratureWizard() {
   const { t } = useLang();
-  const [domain, setDomain] = useState("");
+  const [primaryDomain, setPrimaryDomain] = useState("");
+  const [domains, setDomains] = useState<string[]>([]);
   const [publicationType, setPublicationType] = useState("journal-paper");
   const [title, setTitle] = useState("");
   const [doi, setDoi] = useState("");
@@ -31,7 +49,7 @@ export default function NewLiteratureWizard() {
   const [drive, setDrive] = useState("");
   const [notes, setNotes] = useState("");
   const [body, setBody] = useState("");
-  const [busy, setBusy] = useState<"" | "doi" | "draft" | "commit" | "pdf" | "drive">("");
+  const [busy, setBusy] = useState<BusyAction>("");
   const [pdfName, setPdfName] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -60,22 +78,24 @@ export default function NewLiteratureWizard() {
   const slug = citationKey.trim();
   const authorList = authors.split(/[;,]/).map((author) => author.trim()).filter(Boolean);
   const tagList = tags
-    .split(/[,，\s]+/)
+    .split(/[,\s\uFF0C]+/)
     .map((tag) => tag.trim().toLowerCase())
     .filter(Boolean)
     .slice(0, 6);
   const driveList = drive.split(/\s+/).map((link) => link.trim()).filter(Boolean);
-  const ready = Boolean(
-    title.trim() &&
-      domain &&
-      publicationType &&
-      authorList.length &&
-      Number(year) &&
-      tagList.length &&
-      slug &&
-      /^[a-z0-9][a-z0-9-]*$/.test(slug),
-  );
-  const archiveSignature = `${publicationType}:${slug}`;
+  const citationKeyValid = /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(slug);
+  const missingRequirements = [
+    !primaryDomain ? t("new.missingPrimaryDomain") : "",
+    !domains.length || !domains.includes(primaryDomain) ? t("new.missingDomains") : "",
+    !title.trim() ? t("new.missingTitle") : "",
+    !publicationType ? t("new.missingPublicationType") : "",
+    !authorList.length ? t("new.missingAuthors") : "",
+    !Number(year) ? t("new.missingYear") : "",
+    !tagList.length ? t("new.missingTags") : "",
+    !citationKeyValid ? t("new.missingCitationKey") : "",
+  ].filter(Boolean);
+  const ready = missingRequirements.length === 0;
+  const archiveSignature = `${slug}:${doi.trim().toLowerCase()}`;
   const archiveCurrent = Boolean(
     archived &&
       archived.signature === archiveSignature &&
@@ -91,7 +111,8 @@ export default function NewLiteratureWizard() {
       `title: ${JSON.stringify(title)}`,
       "entry_type: literature",
       `publication_type: ${publicationType}`,
-      `domain: ${domain}`,
+      `primary_domain: ${primaryDomain}`,
+      `domains: ${yamlList(domains)}`,
       `venue: ${JSON.stringify(venue)}`,
       `doi: ${JSON.stringify(doi)}`,
       `abstract: ${JSON.stringify(abstract)}`,
@@ -113,24 +134,15 @@ export default function NewLiteratureWizard() {
     return frontmatter + (body.trim() || LITERATURE_BODY_TEMPLATE.trim()) + "\n";
   };
 
-  const applyLiterature = (
-    data: {
-      domain?: string;
-      publication_type?: string;
-      title?: string;
-      authors?: string[];
-      year?: number | null;
-      venue?: string;
-      doi?: string;
-      abstract?: string;
-      citation_key?: string;
-      tags?: string[];
-      body?: string;
-    },
-    preserveArchiveIdentity = false,
-  ) => {
+  const applyLiterature = (data: ExtractedLiterature, preserveArchiveIdentity = false) => {
     if (!preserveArchiveIdentity) {
-      if (data.domain && DOMAINS.includes(data.domain)) setDomain(data.domain);
+      const extractedPrimary =
+        data.primary_domain && DOMAINS.includes(data.primary_domain) ? data.primary_domain : "";
+      const extractedDomains = (data.domains || []).filter((item) => DOMAINS.includes(item));
+      if (extractedPrimary) {
+        setPrimaryDomain(extractedPrimary);
+        setDomains(Array.from(new Set([extractedPrimary, ...extractedDomains])));
+      }
       if (data.publication_type && PUBLICATION_TYPES.includes(data.publication_type as never)) {
         setPublicationType(data.publication_type);
       }
@@ -146,41 +158,32 @@ export default function NewLiteratureWizard() {
     setBody(data.body || "");
   };
 
+  const choosePrimaryDomain = (value: string) => {
+    setPrimaryDomain(value);
+    setDomains((current) => (value ? Array.from(new Set([value, ...current])) : current));
+  };
+
+  const toggleDomain = (value: string) => {
+    if (value === primaryDomain) return;
+    setDomains((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    );
+  };
+
   const uploadDrive = async () => {
     if (!pdfFile || !driveUploadEnabled || !ready) return;
     setBusy("drive");
     setUploadProgress(0);
     setMsg(null);
     try {
-      const result = await uploadToDrive(
-        pdfFile,
-        slug,
-        publicationType,
-        doi,
-        setUploadProgress,
-      );
+      const result = await uploadToDrive(pdfFile, slug, doi, setUploadProgress);
       setDrive(result.link);
       setArchived({ ...result, signature: archiveSignature });
-
-      try {
-        const response = await fetch("/api/extract", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ driveFileId: result.id }),
-        });
-        const extracted = await response.json();
-        if (!response.ok) throw new Error(extracted.error);
-        applyLiterature(extracted, true);
-        setMsg({ kind: "ok", text: t("new.driveVisionOk"), link: result.link });
-      } catch (analysisError) {
-        setMsg({
-          kind: "warn",
-          text: `${result.reused ? t("new.driveDuplicate") : t("new.driveUploaded")} ${t("new.originalReadFail")}: ${
-            analysisError instanceof Error ? analysisError.message : analysisError
-          }`,
-          link: result.link,
-        });
-      }
+      setMsg({
+        kind: "ok",
+        text: result.reused ? t("new.driveDuplicate") : t("new.driveUploaded"),
+        link: result.link,
+      });
     } catch (error) {
       setMsg({
         kind: "warn",
@@ -191,17 +194,22 @@ export default function NewLiteratureWizard() {
     }
   };
 
-  const onPdf = async (file: File | undefined) => {
+  const onPdf = (file: File | undefined) => {
     if (!file) return;
-    setBusy("pdf");
-    setMsg(null);
     setPdfName(file.name);
     setPdfFile(file);
     setDrive("");
     setArchived(null);
     setUploadProgress(0);
+    setMsg({ kind: "ok", text: t("new.pdfSelected") });
+  };
+
+  const extractSelectedPdf = async () => {
+    if (!pdfFile) return;
+    setBusy("extract");
+    setMsg(null);
     try {
-      const text = await extractPdfText(file);
+      const text = await extractPdfText(pdfFile);
       if (text.length < 80) throw new Error(t("new.pdfNoText"));
       const response = await fetch("/api/extract", {
         method: "POST",
@@ -216,6 +224,31 @@ export default function NewLiteratureWizard() {
       setMsg({
         kind: "warn",
         text: `${t("new.pdfFail")}: ${error instanceof Error ? error.message : error}`,
+      });
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const analyzeOriginalPdf = async () => {
+    if (!archived) return;
+    setBusy("original");
+    setMsg(null);
+    try {
+      const response = await fetch("/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ driveFileId: archived.id }),
+      });
+      const extracted = await response.json();
+      if (!response.ok) throw new Error(extracted.error);
+      applyLiterature(extracted, true);
+      setMsg({ kind: "ok", text: t("new.driveVisionOk"), link: archived.link });
+    } catch (error) {
+      setMsg({
+        kind: "warn",
+        text: `${t("new.originalReadFail")}: ${error instanceof Error ? error.message : error}`,
+        link: archived.link,
       });
     } finally {
       setBusy("");
@@ -324,9 +357,18 @@ export default function NewLiteratureWizard() {
             <b>{t("new.pdfTitle")}</b>
             <p className="subtitle" style={{ margin: "4px 0 0" }}>{t("new.pdfHint")}</p>
           </div>
-          <button className="btn primary" onClick={() => fileRef.current?.click()} disabled={busy !== ""}>
-            {busy === "pdf" ? t("new.pdfBusy") : t("new.pdfBtn")}
-          </button>
+          <div className="btn-row">
+            <button className="btn" onClick={() => fileRef.current?.click()} disabled={busy !== ""}>
+              {t("new.pdfBtn")}
+            </button>
+            <button
+              className="btn primary"
+              onClick={extractSelectedPdf}
+              disabled={!pdfFile || busy !== ""}
+            >
+              {busy === "extract" ? t("new.pdfBusy") : t("new.aiExtract")}
+            </button>
+          </div>
         </div>
         {pdfName && <p className="subtitle" style={{ margin: "8px 0 0" }}>{pdfName}</p>}
         <p className="subtitle" style={{ margin: "10px 0 0" }}>
@@ -341,13 +383,30 @@ export default function NewLiteratureWizard() {
       </div>
 
       <div className="form-card">
-        <label>{t("new.domain")}</label>
-        <select value={domain} onChange={(event) => setDomain(event.target.value)}>
-          <option value="">{t("new.domainPick")}</option>
+        <label>{t("new.primaryDomain")}</label>
+        <select value={primaryDomain} onChange={(event) => choosePrimaryDomain(event.target.value)}>
+          <option value="">{t("new.primaryDomainPick")}</option>
           {DOMAINS.map((item) => (
             <option key={item} value={item}>{DOMAIN_LABELS[item] || item}</option>
           ))}
         </select>
+
+        <label>{t("new.relatedDomains")}</label>
+        <p className="subtitle" style={{ margin: "4px 0 8px" }}>{t("new.domainsHint")}</p>
+        <div className="domain-picker">
+          {DOMAINS.map((item) => (
+            <label key={item}>
+              <input
+                type="checkbox"
+                checked={domains.includes(item)}
+                disabled={item === primaryDomain}
+                onChange={() => toggleDomain(item)}
+              />
+              {DOMAIN_LABELS[item] || item}
+              {item === primaryDomain ? ` (${t("new.primary")})` : ""}
+            </label>
+          ))}
+        </div>
 
         <label>{t("new.publicationType")}</label>
         <select value={publicationType} onChange={(event) => setPublicationType(event.target.value)}>
@@ -368,7 +427,7 @@ export default function NewLiteratureWizard() {
         <input value={title} onChange={(event) => setTitle(event.target.value)} />
 
         <label>{t("new.citationKey")}</label>
-        <input value={citationKey} onChange={(event) => setCitationKey(event.target.value)} placeholder="widrow1975adaptive" />
+        <input value={citationKey} onChange={(event) => setCitationKey(event.target.value)} placeholder="Elliott2018Head" />
 
         <label>{t("new.authors")}</label>
         <input value={authors} onChange={(event) => setAuthors(event.target.value)} />
@@ -416,7 +475,7 @@ export default function NewLiteratureWizard() {
           <h2 style={{ marginTop: 0 }}>{t("new.archiveTitle")}</h2>
           <p className="subtitle">{t("new.archiveHint")}</p>
           <p className="subtitle">
-            {t("new.archiveTarget")}: <code>{publicationType}/NNNN_{slug || "citation-key"}.pdf</code>
+            {t("new.archiveTarget")}: <code>NNNN_{slug || "citation-key"}.pdf</code>
           </p>
           {busy === "drive" && (
             <div className="upload-progress" aria-label={`${uploadProgress}%`}>
@@ -432,12 +491,28 @@ export default function NewLiteratureWizard() {
                   : t("new.driveConfirmUpload")}
             </button>
             {archived && (
-              <a className="btn" href={archived.link} target="_blank" rel="noreferrer">
-                {t("new.driveOpenFile")}
-              </a>
+              <>
+                <button
+                  className="btn"
+                  onClick={analyzeOriginalPdf}
+                  disabled={busy !== "" || !archiveCurrent}
+                >
+                  {busy === "original" ? t("new.originalAnalyzing") : t("new.originalAnalyze")}
+                </button>
+                <a className="btn" href={archived.link} target="_blank" rel="noreferrer">
+                  {t("new.driveOpenFile")}
+                </a>
+              </>
             )}
           </div>
-          {!ready && <p className="subtitle">{t("new.archiveRequired")}</p>}
+          {!ready && (
+            <div className="notice warn">
+              <b>{t("new.archiveRequired")}</b>
+              <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
+                {missingRequirements.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          )}
           {archived && !archiveCurrent && <div className="notice warn">{t("new.archiveChanged")}</div>}
         </div>
       )}
@@ -458,6 +533,11 @@ export default function NewLiteratureWizard() {
         </button>
       </div>
       {currentUser && <p className="subtitle">{t("new.publishingAs")}: <b>{currentUser}</b></p>}
+      {!ready && (
+        <p className="subtitle">
+          {t("new.publishBlocked")}: {missingRequirements.join(", ")}
+        </p>
+      )}
       {ready && needsArchive && !archiveCurrent && <p className="subtitle">{t("new.submitNeedsArchive")}</p>}
     </>
   );

@@ -15,7 +15,8 @@ part of the main Library, Ratings, or Export workflow. Every new record uses
 title: Adaptive noise cancelling: principles and applications
 entry_type: literature
 publication_type: journal-paper
-domain: active-noise-control
+primary_domain: active-noise-control
+domains: [active-noise-control, fundamentals-dsp]
 venue: Proceedings of the IEEE
 doi: 10.1109/PROC.1975.10036
 abstract: ""
@@ -43,7 +44,7 @@ activity: []
 
 ## Controlled fields
 
-### `domain`
+### `primary_domain` and `domains`
 
 - `active-noise-control`
 - `acoustic-echo-cancellation`
@@ -57,7 +58,9 @@ activity: []
 - `fundamentals-dsp`
 - `other`
 
-Domain is the primary organization axis. It controls personal rating queues.
+`primary_domain` is the single filing and statistics axis. `domains` is a
+non-empty multi-value list that must include the primary domain. Cross-domain
+matches use `domains`; primary grouping uses `primary_domain`.
 
 ### `publication_type`
 
@@ -73,7 +76,8 @@ Domain is the primary organization axis. It controls personal rating queues.
 - `dataset-paper`
 - `other`
 
-Publication type also determines the Google Drive archive subfolder.
+Publication type is academic metadata only. Google Drive remains a flat original
+PDF repository; classification and cross-domain relationships live in the card.
 
 ### `tags`
 
@@ -84,7 +88,8 @@ narrow. Do not use years, author names, or generic labels such as `paper` or
 ## Naming and duplicate rules
 
 - File name equals `citation_key`.
-- The citation key is lowercase kebab-case compatible.
+- The citation key may use letters, numbers, dots, underscores, and hyphens.
+- Drive files use the globally unique format `NNNN_citationKey.pdf`.
 - Drive duplicate detection uses DOI and citation key.
 - GitHub publication checks DOI, normalized title, and citation key.
 

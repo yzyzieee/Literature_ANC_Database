@@ -65,7 +65,8 @@ export interface CardMeta {
   title: string;
   entry_type: EntryType;
   publication_type: PublicationType | "";
-  domain: string;
+  primary_domain: string;
+  domains: string[];
   venue: string;
   doi: string;
   abstract: string;
@@ -164,6 +165,13 @@ export const DOMAIN_LABELS: Record<string, string> = {
 
 export function domainLabel(d: string): string {
   return DOMAIN_LABELS[d] || d || "Unsorted";
+}
+
+export function cardMatchesDomain(
+  card: Pick<CardMeta, "primary_domain" | "domains">,
+  domain: string,
+): boolean {
+  return card.primary_domain === domain || card.domains.includes(domain);
 }
 
 export function isLiterature(card: Pick<CardMeta, "entry_type">): boolean {

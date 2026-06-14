@@ -6,7 +6,11 @@
     "title": "Adaptive noise cancelling: principles and applications",
     "entry_type": "literature",
     "publication_type": "journal-paper",
-    "domain": "active-noise-control",
+    "primary_domain": "active-noise-control",
+    "domains": [
+      "active-noise-control",
+      "fundamentals-dsp"
+    ],
     "venue": "Proceedings of the IEEE",
     "doi": "10.1109/PROC.1975.10036",
     "abstract": "",
@@ -55,7 +59,12 @@
     "title": "Spatially Selective Active Noise Control for Open-Fitting Hearables with Acausal Optimization",
     "entry_type": "literature",
     "publication_type": "conference-paper",
-    "domain": "active-noise-control",
+    "primary_domain": "active-noise-control",
+    "domains": [
+      "active-noise-control",
+      "spatial-audio",
+      "beamforming-arrays"
+    ],
     "venue": "Forum Acusticum Euronoise 2025",
     "doi": "10.61782/fa.2025.0817",
     "abstract": "An acausal relative-impulse-response formulation is introduced for spatially selective active noise control in open-fitting hearables. Simulations evaluate speech distortion, noise reduction, and SNR improvement across delays and degrees of acausality.",
@@ -89,7 +98,11 @@
     "title": "Robust Soft-Constrained Spatially Selective Active Noise Control for Hearables Under Secondary Path Variations",
     "entry_type": "literature",
     "publication_type": "preprint",
-    "domain": "active-noise-control",
+    "primary_domain": "active-noise-control",
+    "domains": [
+      "active-noise-control",
+      "spatial-audio"
+    ],
     "venue": "arXiv",
     "doi": "10.48550/arXiv.2605.17407",
     "abstract": "A robust soft-constrained spatially selective ANC design averages its objective over measured secondary-path estimates. Simulations and real-time experiments show a narrower performance spread under path mismatch with a small reduction in mean performance.",
@@ -128,7 +141,10 @@
     "title": "Active noise control (ANC)",
     "entry_type": "legacy-note",
     "publication_type": "",
-    "domain": "active-noise-control",
+    "primary_domain": "active-noise-control",
+    "domains": [
+      "active-noise-control"
+    ],
     "venue": "",
     "doi": "",
     "abstract": "",
@@ -160,7 +176,10 @@
     "title": "Filtered-x LMS (FxLMS)",
     "entry_type": "legacy-note",
     "publication_type": "",
-    "domain": "active-noise-control",
+    "primary_domain": "active-noise-control",
+    "domains": [
+      "active-noise-control"
+    ],
     "venue": "",
     "doi": "",
     "abstract": "",

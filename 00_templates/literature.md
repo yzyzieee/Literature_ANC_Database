@@ -2,7 +2,8 @@
 title: ""
 entry_type: literature
 publication_type: journal-paper
-domain: ""
+primary_domain: ""
+domains: []
 venue: ""
 doi: ""
 abstract: ""

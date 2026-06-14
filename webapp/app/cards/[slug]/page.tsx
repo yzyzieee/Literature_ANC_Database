@@ -32,7 +32,12 @@ export default async function CardPage({ params }: { params: Promise<{ slug: str
       <div className="detail-header">
         <h1>{card.title}</h1>
         <div className="meta-row" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <span className="badge domain">{domainLabel(card.domain)}</span>
+          <span className="badge domain">{domainLabel(card.primary_domain)}</span>
+          {card.domains
+            .filter((domain) => domain !== card.primary_domain)
+            .map((domain) => (
+              <span className="badge" key={domain}>{domainLabel(domain)}</span>
+            ))}
           {card.publication_type && (
             <span className="badge type">{publicationTypeLabel(card.publication_type)}</span>
           )}

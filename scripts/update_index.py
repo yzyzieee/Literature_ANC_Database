@@ -18,6 +18,8 @@ def main() -> None:
         legacy_type = meta.get("type", "")
         entry_type = meta.get("entry_type") or (
             "literature" if legacy_type == "paper" else "legacy-note")
+        primary_domain = meta.get("primary_domain") or meta.get("domain", "")
+        domains = meta.get("domains") or ([primary_domain] if primary_domain else [])
         index.append({
             "slug": card.slug,
             "path": card.rel_path,
@@ -25,7 +27,8 @@ def main() -> None:
             "title": meta.get("title", card.slug),
             "entry_type": entry_type,
             "publication_type": meta.get("publication_type", ""),
-            "domain": meta.get("domain", ""),
+            "primary_domain": primary_domain,
+            "domains": domains,
             "venue": meta.get("venue", ""),
             "doi": meta.get("doi", ""),
             "abstract": meta.get("abstract", ""),
@@ -45,7 +48,7 @@ def main() -> None:
             "legacy_type": legacy_type,
         })
     index.sort(key=lambda item: (
-        item["entry_type"] != "literature", item["domain"], item["slug"]))
+        item["entry_type"] != "literature", item["primary_domain"], item["slug"]))
 
     out_dir = ROOT / "index"
     out_dir.mkdir(exist_ok=True)
@@ -64,7 +67,7 @@ def main() -> None:
         official = [
             item for item in index
             if item["entry_type"] == "literature"
-            and item["domain"] == domain
+            and item["primary_domain"] == domain
             and item["folder"] != PENDING_DIR
         ]
         if not official:
@@ -85,7 +88,7 @@ def main() -> None:
         for item in pending:
             lines.append(
                 f"- [{item['title']}]({item['path']}) - "
-                f"_{item['domain']}_ `{item['status']}`")
+                f"_{item['primary_domain']}_ `{item['status']}`")
         lines.append("")
 
     legacy = [item for item in index if item["entry_type"] == "legacy-note"]

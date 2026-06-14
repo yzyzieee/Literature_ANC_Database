@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { driveConfigured, getDriveAccessToken } from "@/lib/google";
-import { PUBLICATION_TYPES } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const VALID_PUBLICATION_TYPES = new Set<string>(PUBLICATION_TYPES);
-
 interface DriveFile {
   id: string;
   name: string;
+  parents?: string[];
   webViewLink?: string;
   appProperties?: Record<string, string>;
-}
-
-function escapeDriveQuery(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 function normalizedDoi(value?: string): string {
@@ -26,40 +20,6 @@ function normalizedDoi(value?: string): string {
     .replace(/^doi:\s*/, "");
 }
 
-async function findOrCreateSubfolder(token: string, rootId: string, name: string): Promise<string> {
-  const q = [
-    `'${escapeDriveQuery(rootId)}' in parents`,
-    "mimeType='application/vnd.google-apps.folder'",
-    `name='${escapeDriveQuery(name)}'`,
-    "trashed=false",
-  ].join(" and ");
-  const params = new URLSearchParams({
-    q,
-    fields: "files(id)",
-    supportsAllDrives: "true",
-    includeItemsFromAllDrives: "true",
-  });
-  const list = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
-  if (!list.ok) {
-    throw new Error(`folder lookup ${list.status}: ${(await list.text()).slice(0, 200)}`);
-  }
-  const data = (await list.json()) as { files?: { id: string }[] };
-  if (data.files?.length) return data.files[0].id;
-
-  const created = await fetch("https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&fields=id", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ name, mimeType: "application/vnd.google-apps.folder", parents: [rootId] }),
-  });
-  if (!created.ok) {
-    throw new Error(`folder creation ${created.status}: ${(await created.text()).slice(0, 200)}`);
-  }
-  return ((await created.json()) as { id: string }).id;
-}
-
 async function listLibraryFiles(token: string): Promise<DriveFile[]> {
   const files: DriveFile[] = [];
   let pageToken = "";
@@ -68,7 +28,7 @@ async function listLibraryFiles(token: string): Promise<DriveFile[]> {
     const params = new URLSearchParams({
       q: "trashed=false and mimeType!='application/vnd.google-apps.folder'",
       pageSize: "1000",
-      fields: "nextPageToken,files(id,name,webViewLink,appProperties)",
+      fields: "nextPageToken,files(id,name,parents,webViewLink,appProperties)",
       supportsAllDrives: "true",
       includeItemsFromAllDrives: "true",
     });
@@ -90,13 +50,15 @@ async function listLibraryFiles(token: string): Promise<DriveFile[]> {
 }
 
 function findDuplicate(files: DriveFile[], base: string, doi: string): DriveFile | undefined {
-  const expectedSuffix = `_${base}.pdf`;
+  const normalizedBase = base.toLowerCase();
+  const expectedSuffix = `_${normalizedBase}.pdf`;
   return files.find((file) => {
     const fileDoi = normalizedDoi(file.appProperties?.doi);
     if (doi && fileDoi && fileDoi === doi) return true;
-    return file.appProperties?.literatureKey === base ||
-      file.name === `${base}.pdf` ||
-      (/^\d+_/.test(file.name) && file.name.endsWith(expectedSuffix));
+    const fileName = file.name.toLowerCase();
+    return file.appProperties?.literatureKey?.toLowerCase() === normalizedBase ||
+      fileName === `${normalizedBase}.pdf` ||
+      (/^\d+_/.test(fileName) && fileName.endsWith(expectedSuffix));
   });
 }
 
@@ -119,18 +81,14 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json()) as {
     base?: string;
-    publicationType?: string;
     mimeType?: string;
     size?: number;
     doi?: string;
   };
   const base = (body.base || "file")
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
+    .trim()
+    .replace(/[^A-Za-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "") || "file";
-  const publicationType = VALID_PUBLICATION_TYPES.has(body.publicationType || "")
-    ? body.publicationType!
-    : "other";
   const doi = normalizedDoi(body.doi);
   const username = req.headers.get("x-kb-user") || "unknown";
   const uploadedAt = new Date().toISOString();
@@ -146,7 +104,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const files = await listLibraryFiles(token);
+    const rootId = process.env.DRIVE_FOLDER_ID;
+    const visibleFiles = await listLibraryFiles(token);
+    const files = visibleFiles.filter(
+      (file) => Boolean(file.appProperties?.literatureKey) ||
+        Boolean(rootId && file.parents?.includes(rootId)),
+    );
     const duplicate = findDuplicate(files, base, doi);
     if (duplicate) {
       return NextResponse.json({
@@ -160,10 +123,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const rootId = process.env.DRIVE_FOLDER_ID;
-    const parentId = rootId
-      ? await findOrCreateSubfolder(token, rootId, publicationType)
-      : undefined;
     const name = `${nextId(files)}_${base}.pdf`;
 
     const init = await fetch(
@@ -178,10 +137,9 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           name,
-          ...(parentId ? { parents: [parentId] } : {}),
+          ...(rootId ? { parents: [rootId] } : {}),
           appProperties: {
             literatureKey: base,
-            publicationType,
             uploadedBy: username,
             uploadedAt,
             ...(doi ? { doi } : {}),

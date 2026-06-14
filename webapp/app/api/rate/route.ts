@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   const recommendation = valueInRange(body.recommendation);
   const innovation = valueInRange(body.innovation);
   const rigor = valueInRange(body.rigor);
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug) || !reviewer || !recommendation || !innovation || !rigor) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(slug) || !reviewer || !recommendation || !innovation || !rigor) {
     return NextResponse.json(
       { error: "A valid card and three integer scores from 1 to 5 are required." },
       { status: 400 },

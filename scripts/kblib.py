@@ -35,7 +35,7 @@ DOMAINS = [
     "other",
 ]
 
-# Publication kind, also used for the Drive subfolder.
+# Publication kind is card metadata only; Drive remains a flat PDF repository.
 PUBLICATION_TYPES = {
     "journal-paper",
     "conference-paper",

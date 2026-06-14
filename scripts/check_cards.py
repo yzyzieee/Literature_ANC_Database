@@ -8,9 +8,17 @@ from kblib import (DOMAINS, ENTRY_TYPES, LEGACY_TYPES, OFFICIAL_DIR,
                    PENDING_DIR, PUBLICATION_TYPES, STATUSES, Card, iter_cards,
                    utf8_stdout)
 
-REQUIRED_ALWAYS = ["title", "domain", "status", "tags", "created"]
-REQUIRED_LITERATURE = ["entry_type", "publication_type", "citation_key", "authors", "year"]
-SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+REQUIRED_ALWAYS = ["title", "status", "tags", "created"]
+REQUIRED_LITERATURE = [
+    "entry_type",
+    "publication_type",
+    "primary_domain",
+    "domains",
+    "citation_key",
+    "authors",
+    "year",
+]
+SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 TAG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)")
 LITERATURE_SECTIONS = [
@@ -46,7 +54,8 @@ def main() -> int:
             slugs[card.slug] = card
 
         if not SLUG_RE.match(card.slug):
-            errors.append(f"{where}: file name must be lowercase kebab-case")
+            errors.append(
+                f"{where}: file name may only use letters, numbers, dots, underscores, and hyphens")
 
         for key in REQUIRED_ALWAYS:
             if not meta.get(key):
@@ -54,7 +63,8 @@ def main() -> int:
 
         entry_type = meta.get("entry_type")
         legacy_type = meta.get("type")
-        domain = meta.get("domain")
+        primary_domain = meta.get("primary_domain") or meta.get("domain")
+        domains = meta.get("domains") or ([primary_domain] if primary_domain else [])
         publication_type = meta.get("publication_type")
         status = meta.get("status")
         is_literature = entry_type == "literature"
@@ -65,8 +75,19 @@ def main() -> int:
             errors.append(f"{where}: missing required field 'entry_type'")
         if legacy_type in LEGACY_TYPES:
             warnings.append(f"{where}: legacy note is excluded from the paper-first app")
-        if domain and domain not in DOMAINS:
-            errors.append(f"{where}: invalid domain '{domain}' (expected one of {DOMAINS})")
+        if primary_domain and primary_domain not in DOMAINS:
+            errors.append(
+                f"{where}: invalid primary_domain '{primary_domain}' "
+                f"(expected one of {DOMAINS})")
+        if is_literature:
+            if not isinstance(domains, list) or not domains:
+                errors.append(f"{where}: domains must be a non-empty list")
+            elif primary_domain not in domains:
+                errors.append(f"{where}: domains must include primary_domain")
+            else:
+                invalid_domains = [domain for domain in domains if domain not in DOMAINS]
+                if invalid_domains:
+                    errors.append(f"{where}: invalid domains {invalid_domains}")
         if publication_type and publication_type not in PUBLICATION_TYPES:
             errors.append(
                 f"{where}: invalid publication_type '{publication_type}' "
