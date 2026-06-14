@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Card, CardType } from "@/lib/types";
-import { TYPE_LABELS } from "@/lib/types";
+import type { Card } from "@/lib/types";
+import { DOMAINS, domainLabel } from "@/lib/types";
 import { bundlePrompt, driveDownloadUrl, estimateTokens, matchCardsFromText } from "@/lib/export";
 import { useLang } from "@/lib/i18n";
 import CopyButton from "./CopyButton";
@@ -10,7 +10,7 @@ import DownloadButton from "./DownloadButton";
 
 export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: string }) {
   const { t } = useLang();
-  const [type, setType] = useState<"" | CardType>("");
+  const [domain, setDomain] = useState("");
   const [listText, setListText] = useState("");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -19,10 +19,15 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
     const f = filter.trim().toLowerCase();
     return cards.filter(
       (c) =>
-        (!type || c.type === type) &&
+        (!domain || c.domain === domain) &&
         (!f || c.title.toLowerCase().includes(f) || c.tags.some((tag) => tag.includes(f))),
     );
-  }, [cards, type, filter]);
+  }, [cards, domain, filter]);
+
+  const presentDomains = useMemo(
+    () => DOMAINS.filter((item) => cards.some((card) => card.domain === item)),
+    [cards],
+  );
 
   const chosen = cards.filter((c) => selected.has(c.slug));
   const bundle = useMemo(() => (chosen.length ? bundlePrompt(chosen, repo) : ""), [chosen, repo]);
@@ -62,10 +67,10 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <select value={type} onChange={(e) => setType(e.target.value as "" | CardType)}>
-          <option value="">{t("export.allTypes")}</option>
-          {(Object.keys(TYPE_LABELS) as CardType[]).map((ct) => (
-            <option key={ct} value={ct}>{TYPE_LABELS[ct]}</option>
+        <select value={domain} onChange={(e) => setDomain(e.target.value)}>
+          <option value="">{t("export.allDomains")}</option>
+          {presentDomains.map((item) => (
+            <option key={item} value={item}>{domainLabel(item)}</option>
           ))}
         </select>
         <button className="btn" onClick={() => setSelected(new Set([...selected, ...visible.map((c) => c.slug)]))}>
@@ -86,7 +91,7 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
             <span>
               <span className="titles">{c.title}</span>
               <span className="meta-row">
-                <span className="badge type">{TYPE_LABELS[c.type]}</span>
+                <span className="badge domain">{domainLabel(c.domain)}</span>
                 {c.drive.length > 0 && <span className="badge">{t("export.hasFulltext")}</span>}
                 {c.comments.length > 0 && <span className="badge">{c.comments.length} {t("comments.count")}</span>}
                 {c.tags.map((tag) => (

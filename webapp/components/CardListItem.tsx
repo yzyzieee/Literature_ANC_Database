@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CardMeta } from "@/lib/types";
-import { STATUS_LABELS, TYPE_LABELS, domainLabel } from "@/lib/types";
+import { domainLabel } from "@/lib/types";
 import DownloadButton from "./DownloadButton";
 
 export default function CardListItem({ card }: { card: CardMeta }) {
@@ -19,8 +19,6 @@ export default function CardListItem({ card }: { card: CardMeta }) {
       {card.summary && <div className="excerpt">{card.summary.slice(0, 180)}</div>}
       <div className="meta-row">
         {card.domain && <span className="badge domain">{domainLabel(card.domain)}</span>}
-        <span className="badge type">{TYPE_LABELS[card.type]}</span>
-        <span className={`badge ${card.status}`}>{STATUS_LABELS[card.status]}</span>
         {card.rating && <span className="badge weight">Weight {card.rating.weight}</span>}
         {card.comments.length > 0 && <span className="badge">Comments {card.comments.length}</span>}
         {card.tags.map((t) => (

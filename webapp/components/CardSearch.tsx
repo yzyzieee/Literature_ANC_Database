@@ -2,15 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
-import type { CardMeta, CardType } from "@/lib/types";
-import { DOMAINS, TYPE_LABELS, domainLabel } from "@/lib/types";
+import type { CardMeta } from "@/lib/types";
+import { DOMAINS, domainLabel } from "@/lib/types";
 import { useLang } from "@/lib/i18n";
 import CardListItem from "./CardListItem";
 
 export default function CardSearch({ cards }: { cards: CardMeta[] }) {
   const { t } = useLang();
   const [query, setQuery] = useState("");
-  const [type, setType] = useState<"" | CardType>("");
   const [domain, setDomain] = useState("");
 
   const fuse = useMemo(
@@ -25,10 +24,9 @@ export default function CardSearch({ cards }: { cards: CardMeta[] }) {
 
   const results = useMemo(() => {
     let base = query.trim() ? fuse.search(query.trim()).map((r) => r.item) : cards;
-    if (type) base = base.filter((c) => c.type === type);
     if (domain) base = base.filter((c) => c.domain === domain);
     return base;
-  }, [query, type, domain, cards, fuse]);
+  }, [query, domain, cards, fuse]);
 
   // Group by domain (domains in the canonical order, unknown last).
   const grouped = useMemo(() => {
@@ -62,14 +60,6 @@ export default function CardSearch({ cards }: { cards: CardMeta[] }) {
           {presentDomains.map((d) => (
             <option key={d} value={d}>
               {domainLabel(d)}
-            </option>
-          ))}
-        </select>
-        <select value={type} onChange={(e) => setType(e.target.value as "" | CardType)}>
-          <option value="">{t("cards.allTypes")}</option>
-          {(Object.keys(TYPE_LABELS) as CardType[]).map((ct) => (
-            <option key={ct} value={ct}>
-              {TYPE_LABELS[ct]}
             </option>
           ))}
         </select>

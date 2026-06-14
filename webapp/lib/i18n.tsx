@@ -25,9 +25,8 @@ const dict: Record<Lang, Record<string, string>> = {
     "home.browseAll": "Browse all →",
 
     "cards.title": "Library",
-    "cards.subtitle": "All published cards with instant client-side search and team weights.",
+    "cards.subtitle": "All published cards, organized and filtered by research domain.",
     "cards.search": "Search title / tags / authors / summary …",
-    "cards.allTypes": "All types",
     "cards.allDomains": "All domains",
     "cards.unit": "cards",
 
@@ -161,7 +160,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "export.title": "Export for your LLM",
     "export.subtitle": "Bundle cards, team ratings, and member comments into a prompt for your own LLM, then paste its reference list back here to download the originals. No team API spend.",
     "export.filter": "Filter by title / tags …",
-    "export.allTypes": "All types",
+    "export.allDomains": "All domains",
     "export.selectAll": "Select shown",
     "export.clear": "Clear",
     "export.hasFulltext": "📎 full-text link",
@@ -225,9 +224,8 @@ const dict: Record<Lang, Record<string, string>> = {
     "home.browseAll": "浏览全部 →",
 
     "cards.title": "卡片库",
-    "cards.subtitle": "全部正式卡片，支持客户端即时搜索与团队权重。",
+    "cards.subtitle": "全部正式卡片，统一按研究领域组织和筛选。",
     "cards.search": "搜索标题 / 标签 / 作者 / 摘要 …",
-    "cards.allTypes": "全部类型",
     "cards.allDomains": "全部领域",
     "cards.unit": "张卡片",
 
@@ -361,7 +359,7 @@ const dict: Record<Lang, Record<string, string>> = {
     "export.title": "导出给你的 LLM",
     "export.subtitle": "把知识卡、团队评分和成员评论一起打包给你自己的 LLM，再把它给的文献清单粘回这里下载原文。不消耗团队 API 额度。",
     "export.filter": "按标题 / 标签过滤 …",
-    "export.allTypes": "全部类型",
+    "export.allDomains": "全部领域",
     "export.selectAll": "全选当前",
     "export.clear": "清空",
     "export.hasFulltext": "📎 有全文链接",

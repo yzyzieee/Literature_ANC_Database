@@ -4,7 +4,7 @@ Next.js UI layer over the knowledge-base repo. The repo (markdown cards in the p
 
 ## Features
 
-- **Library** — browse all cards, client-side fuzzy search (title / tags / authors / summary), type filter
+- **Library** — browse all cards, client-side fuzzy search (title / tags / authors / summary), and research-domain filtering
 - **Card detail** — rendered markdown, `[[wiki-links]]` resolved to card links, Drive links, related cards, one-click "copy for your LLM"
 - **Team ratings** — rate official literature for recommendation, innovation, and rigor; the aggregate 0–100 weight is stored in the card
 - **Team accounts** — choose a member account, save research domains, receive a personal unrated queue, and edit past ratings in History
