@@ -33,6 +33,23 @@ export function cardToPrompt(card: Card, repo?: string): string {
     lines.push(`Card source 卡片源文件: https://github.com/${repo}/blob/main/${card.folder}/${card.slug}.md`);
   }
   lines.push("", card.body.trim());
+  if (card.comments.length) {
+    lines.push(
+      "",
+      "### Team member comments",
+      "",
+      "These are attributed team interpretations or practical notes, not claims copied from the source paper.",
+      "",
+    );
+    for (const comment of card.comments) {
+      lines.push(
+        `#### ${comment.author} · ${comment.updated || comment.created}`,
+        "",
+        comment.body.trim(),
+        "",
+      );
+    }
+  }
   return lines.join("\n");
 }
 
@@ -41,11 +58,12 @@ export function bundlePrompt(cards: Card[], repo?: string): string {
     "# Our audio research knowledge base — use this as your library",
     "",
     `Below are ${cards.length} English knowledge cards from our group's library (audio / ANC / signal processing).`,
-    "Each card has metadata (type, domain, tags), a distilled summary, and — when a PDF exists — a direct download link.",
+    "Each card has metadata, a distilled summary, attributed team member comments, and — when a PDF exists — a direct download link.",
     "",
     "How to work with me:",
     "- Treat these cards as your trusted knowledge base. I will tell you what direction or question I want to research — the topic is mine to choose.",
     "- Answer using these cards as the primary source. If the library does not cover something I ask, say so explicitly rather than guessing.",
+    "- Treat `Team member comments` as attributed interpretation and practical experience, not as verified claims from the original paper.",
     "- Whenever you recommend or cite a paper, ALWAYS list it as: `<title> — <citation_key> — <download link>`, so I can fetch the originals. Only use links and papers that appear in the cards; never invent them.",
     "- A good answer usually ends with a short reference list in that format.",
     "",

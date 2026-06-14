@@ -88,6 +88,7 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
               <span className="meta-row">
                 <span className="badge type">{TYPE_LABELS[c.type]}</span>
                 {c.drive.length > 0 && <span className="badge">{t("export.hasFulltext")}</span>}
+                {c.comments.length > 0 && <span className="badge">{c.comments.length} {t("comments.count")}</span>}
                 {c.tags.map((tag) => (
                   <span key={tag} className="badge">#{tag}</span>
                 ))}

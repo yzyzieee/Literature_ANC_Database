@@ -78,6 +78,7 @@ function validatedOfficialCard(
   data.reviewed_by = Array.isArray(data.reviewed_by) ? data.reviewed_by : [];
   data.rating = data.rating || null;
   data.ratings = Array.isArray(data.ratings) ? data.ratings : [];
+  data.comments = Array.isArray(data.comments) ? data.comments : [];
   const publishedAt = new Date().toISOString();
   data.uploaded_by = username;
   data.uploaded_at = publishedAt;

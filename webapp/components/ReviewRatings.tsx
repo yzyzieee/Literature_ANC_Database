@@ -106,6 +106,9 @@ function RatingCard({
         <button className="btn primary" onClick={submit} disabled={busy}>
           {busy ? t("review.saving") : existing ? t("review.update") : t("review.submit")}
         </button>
+        <Link className="btn" href={`/cards/${card.slug}#team-comments`}>
+          {t("comments.open")} ({card.comments.length})
+        </Link>
         {card.drive.length > 0 && <DownloadButton link={card.drive[0]} />}
       </div>
       {message && <div className={`notice ${message.ok ? "ok" : "warn"}`}>{message.text}</div>}

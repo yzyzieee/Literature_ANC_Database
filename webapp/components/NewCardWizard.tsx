@@ -103,6 +103,7 @@ export default function NewCardWizard() {
       "reviewed_by: []",
       "rating: null",
       "ratings: []",
+      "comments: []",
       "---",
       "",
     ].join("\n");

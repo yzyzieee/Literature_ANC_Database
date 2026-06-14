@@ -75,6 +75,27 @@ def main() -> int:
                 if str(tag).isdigit():
                     errors.append(f"{where}: tag '{tag}' looks like a year — tags are domain keywords, not years")
 
+        comments = meta.get("comments") or []
+        if not isinstance(comments, list):
+            errors.append(f"{where}: 'comments' must be a list")
+        else:
+            comment_ids: set[str] = set()
+            for index, comment in enumerate(comments):
+                prefix = f"{where}: comments[{index}]"
+                if not isinstance(comment, dict):
+                    errors.append(f"{prefix} must be a mapping")
+                    continue
+                for field in ("id", "author", "body", "created", "updated"):
+                    if not str(comment.get(field, "")).strip():
+                        errors.append(f"{prefix} missing '{field}'")
+                comment_id = str(comment.get("id", "")).strip()
+                if comment_id in comment_ids:
+                    errors.append(f"{prefix} duplicates comment id '{comment_id}'")
+                elif comment_id:
+                    comment_ids.add(comment_id)
+                if len(str(comment.get("body", ""))) > 4000:
+                    errors.append(f"{prefix} body exceeds 4000 characters")
+
         if card.folder == PENDING_DIR:
             if status == "official":
                 warnings.append(f"{where}: status is official — will be promoted on next merge")

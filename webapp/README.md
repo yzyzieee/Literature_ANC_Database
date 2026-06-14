@@ -9,6 +9,7 @@ Next.js UI layer over the knowledge-base repo. The repo (markdown cards in the p
 - **Team ratings** — rate official literature for recommendation, innovation, and rigor; the aggregate 0–100 weight is stored in the card
 - **Team accounts** — choose a member account, save research domains, receive a personal unrated queue, and edit past ratings in History
 - **Audit trail** — record who archived/reused the PDF, who published the card, and every rating addition or update
+- **Team comments** — attach attributed interpretations and implementation notes to literature; members can edit their own comments and LLM exports include them
 - **New-card wizard** — choose a template, auto-fill metadata from a DOI (Crossref), optionally draft the English body with DeepSeek, then publish directly into `official/`
 - **UI language toggle** — one-click EN / 中文 switch in the top-right; cards and classification stay English, only the interface chrome switches
 - **导出 Export** — pick cards, bundle them into a prompt-ready markdown pack (with Drive full-text links and a token estimate) to paste into each member's own ChatGPT / Claude / Kimi — zero team API spend for literature research
@@ -36,6 +37,8 @@ The initial registry is `team/members.json` with YZY, JJW, and WBX. YZY is
 the administrator and can add accounts in **Settings**. Each member chooses
 one or more research domains there; Ratings then shows only matching papers
 that member has not rated. History contains prior ratings and allows updates.
+Card detail pages provide attributed comments; these are stored in the Card
+and included in single-card and batch exports for external LLMs.
 
 Account-name login is convenient identity selection for a trusted team, not
 strong authentication. Add per-member PINs or an OAuth provider before opening
@@ -59,5 +62,5 @@ For a local/manual bump, run `npm run bump:patch` inside `webapp/`.
 ## Architecture notes
 
 - Pages read markdown via `lib/kb.ts` (gray-matter) at build time; search runs client-side with Fuse.js over the serialized card index.
-- Write paths never touch the local filesystem: `/api/commit` publishes validated cards directly to `official/`, `/api/rate` updates rating metadata, and `/api/team` updates `team/members.json`, all using GitHub file SHAs.
+- Write paths never touch the local filesystem: `/api/commit` publishes validated cards directly to `official/`, `/api/rate` updates ratings, `/api/comment` updates attributed comments, and `/api/team` updates `team/members.json`, all using GitHub file SHAs.
 - Rating commits trigger the normal GitHub/Vercel deployment, so the static library reflects the latest team weight after deployment.

@@ -23,6 +23,7 @@ created: 2026-06-12    # YYYY-MM-DD (required)
 reviewed_by: []        # GitHub usernames of reviewers
 rating: null           # aggregate team score, added after the first rating
 ratings: []            # current individual ratings; the same account replaces its prior entry
+comments: []           # attributed member comments; multiple comments per member allowed
 uploaded_by: YZY       # account that published the card
 uploaded_at: 2026-06-14T12:00:00.000Z
 pdf_uploaded_by: YZY   # original PDF uploader (or original owner when reused)
@@ -60,7 +61,26 @@ Members select an account at login. The registry and each member's research
 domains live in `team/members.json`. New cards record the publishing account,
 the original or reused Drive PDF owner, timestamps, and file name. The
 append-only `activity` list records `pdf_uploaded`, `pdf_reused`,
-`card_published`, `rating_added`, and `rating_updated` events.
+`card_published`, `rating_added`, `rating_updated`, `comment_added`, and
+`comment_updated` events.
+
+## Team comments
+
+Members can add multiple comments to an official Card. A comment is structured
+metadata so the web app and external LLM exports preserve attribution:
+
+```yaml
+comments:
+  - id: YZY-mabc1234-a1b2c3d4
+    author: YZY
+    body: The secondary-path assumptions need rechecking for our enclosure.
+    created: 2026-06-14T12:30:00.000Z
+    updated: 2026-06-14T12:30:00.000Z
+```
+
+Only the signed-in author can edit a comment. Edits preserve `created`, update
+`updated`, and append an audit event. Comments are team interpretation, not
+claims from the source paper; LLM exports label them accordingly.
 
 ## Body layout
 

@@ -6,6 +6,7 @@ import { cardToPrompt } from "@/lib/export";
 import { STATUS_LABELS, TYPE_LABELS } from "@/lib/types";
 import { T } from "@/lib/i18n";
 import CopyButton from "@/components/CopyButton";
+import CommentsPanel from "@/components/CommentsPanel";
 import DownloadButton from "@/components/DownloadButton";
 
 export const dynamic = "force-static";
@@ -120,6 +121,7 @@ export default async function CardPage({ params }: { params: Promise<{ slug: str
         </div>
       </div>
       <article className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+      <CommentsPanel slug={card.slug} initialComments={card.comments} />
     </>
   );
 }

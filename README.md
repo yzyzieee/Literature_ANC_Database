@@ -29,7 +29,7 @@ Cards are stored flat and **organised by `domain` (research field) and `type` vi
 2. **Create metadata | 整理元数据** — add the item to Zotero, verify the Better BibTeX citation key, export your personal `.bib` into `bib/personal/<yourname>.bib`.
 3. **Publish card | 发布卡片** — review the generated metadata and English card in the web app, then publish it directly into `official/`.
 4. **Personal queue | 个性化队列** — each member chooses research domains in Settings and sees only matching papers they have not rated.
-5. **Rate | 团队评分** — teammates score recommendation, innovation, and rigor; History allows updates and every change is audited.
+5. **Rate & discuss | 评分与评论** — teammates score recommendation, innovation, and rigor, then add attributed comments; History allows rating updates and every change is audited.
 6. **Maintain & reuse | 维护与复用** — CI regenerates `index/` and `bib/library.bib` on every merge. Browse and search via the web app.
 
 ## Scripts | 脚本

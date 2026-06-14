@@ -40,6 +40,14 @@ export interface ActivityEntry {
   detail?: string;
 }
 
+export interface CommentEntry {
+  id: string;
+  author: string;
+  body: string;
+  created: string;
+  updated: string;
+}
+
 export interface CardMeta {
   slug: string;
   folder: string;
@@ -58,6 +66,7 @@ export interface CardMeta {
   summary: string;
   rating: RatingAggregate | null;
   ratings: RatingEntry[];
+  comments: CommentEntry[];
   uploaded_by: string;
   uploaded_at: string;
   pdf_uploaded_by: string;

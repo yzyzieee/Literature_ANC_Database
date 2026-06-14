@@ -32,6 +32,7 @@ def main() -> None:
             "drive": meta.get("drive") or [],
             "created": str(meta.get("created", "")),
             "rating": meta.get("rating"),
+            "comments": meta.get("comments") or [],
             "uploaded_by": meta.get("uploaded_by", ""),
             "uploaded_at": str(meta.get("uploaded_at", "")),
             "summary": paras[0] if paras else "",

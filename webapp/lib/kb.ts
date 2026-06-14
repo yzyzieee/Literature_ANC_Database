@@ -1,7 +1,16 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import type { ActivityEntry, Card, CardMeta, CardStatus, CardType, RatingAggregate, RatingEntry } from "./types";
+import type {
+  ActivityEntry,
+  Card,
+  CardMeta,
+  CardStatus,
+  CardType,
+  CommentEntry,
+  RatingAggregate,
+  RatingEntry,
+} from "./types";
 
 const KB_ROOT = process.env.KB_PATH || path.resolve(process.cwd(), "..");
 const CARD_DIRS = ["official", "pending"];
@@ -59,6 +68,10 @@ function parseAggregate(value: unknown): RatingAggregate | null {
   };
 }
 
+function timestamp(value: unknown): string {
+  return value instanceof Date ? value.toISOString() : String(value || "");
+}
+
 function parseActivity(value: unknown): ActivityEntry[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -70,6 +83,25 @@ function parseActivity(value: unknown): ActivityEntry[] {
       by: String(entry.by),
       at: String(entry.at),
       ...(entry.detail ? { detail: String(entry.detail) } : {}),
+    }];
+  });
+}
+
+function parseComments(value: unknown): CommentEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const comment = item as Record<string, unknown>;
+    const id = String(comment.id || "").trim();
+    const author = String(comment.author || "").trim();
+    const body = String(comment.body || "").trim();
+    if (!id || !author || !body) return [];
+    return [{
+      id,
+      author,
+      body,
+      created: timestamp(comment.created),
+      updated: timestamp(comment.updated || comment.created),
     }];
   });
 }
@@ -96,6 +128,7 @@ function parseCard(filePath: string, folder: string): Card | null {
       summary: summaryText(content),
       rating: parseAggregate(data.rating),
       ratings: parseRatings(data.ratings),
+      comments: parseComments(data.comments),
       uploaded_by: String(data.uploaded_by ?? ""),
       uploaded_at: String(data.uploaded_at ?? ""),
       pdf_uploaded_by: String(data.pdf_uploaded_by ?? ""),
