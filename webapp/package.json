@@ -1,6 +1,6 @@
 {
   "name": "audio-kb-webapp",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "private": true,
   "scripts": {
     "dev": "next dev",
