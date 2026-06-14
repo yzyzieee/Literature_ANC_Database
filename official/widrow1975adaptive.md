@@ -1,19 +1,50 @@
 ---
-title: "Adaptive noise cancelling: principles and applications"
+title: 'Adaptive noise cancelling: principles and applications'
 type: paper
 domain: active-noise-control
 source_type: paper
 status: official
 citation_key: widrow1975adaptive
-authors: [B. Widrow, J. R. Glover, J. M. McCool, J. Kaunitz, C. S. Williams, R. H. Hearn, J. R. Zeidler, E. Dong, R. C. Goodlin]
+authors:
+  - B. Widrow
+  - J. R. Glover
+  - J. M. McCool
+  - J. Kaunitz
+  - C. S. Williams
+  - R. H. Hearn
+  - J. R. Zeidler
+  - E. Dong
+  - R. C. Goodlin
 year: 1975
-tags: [anc, adaptive-filter, lms]
+tags:
+  - anc
+  - adaptive-filter
+  - lms
 drive: []
-related: [active-noise-control, fxlms]
-created: 2026-06-12
-reviewed_by: []
+related:
+  - active-noise-control
+  - fxlms
+created: '2026-06-12'
+reviewed_by:
+  - YZY
+rating:
+  recommendation: 3
+  innovation: 3
+  rigor: 3
+  weight: 60
+  count: 1
+ratings:
+  - reviewer: YZY
+    recommendation: 3
+    innovation: 3
+    rigor: 3
+    updated: '2026-06-14'
+activity:
+  - action: rating_added
+    by: YZY
+    at: '2026-06-14T07:42:05.782Z'
+    detail: 'recommendation=3, innovation=3, rigor=3'
 ---
-
 ## Summary
 
 The foundational paper on adaptive noise cancelling: a reference input correlated with the noise (but not the signal) is adaptively filtered and subtracted from the primary input, with the LMS algorithm driving the filter towards the Wiener solution without prior knowledge of signal statistics.
