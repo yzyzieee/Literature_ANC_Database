@@ -154,11 +154,15 @@ The included web app is designed for Vercel with `webapp` as the project root. S
 [Deployment](docs/DEPLOYMENT.md) for GitHub, Vercel, environment variable, and
 post-deployment verification steps.
 
-## Contributing
+## Project governance
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Do not submit
-copyrighted PDFs, confidential research material, personal credentials, or private
-storage links to a public repository.
+This is a maintainer-controlled project published for transparency, reuse, and
+self-hosting. The public repository is not an invitation to modify the maintainer's
+hosted literature library, team records, or deployment.
+
+External pull requests and feature requests are not actively solicited and may be
+closed without review. Users who need different workflows should fork the software and
+operate their own repository and storage configuration.
 
 ## Security and content policy
 

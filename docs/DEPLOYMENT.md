@@ -5,7 +5,8 @@ web runtime, and optional Google Drive storage.
 
 ## 1. Prepare the repository
 
-1. Fork or create a repository named `research-literature-hub`.
+1. Clone the software into a repository you control, such as
+   `research-literature-hub`.
 2. Keep the default branch as `main`.
 3. Enable GitHub Actions with read/write workflow permissions.
 4. Enable private vulnerability reporting under repository security settings.
