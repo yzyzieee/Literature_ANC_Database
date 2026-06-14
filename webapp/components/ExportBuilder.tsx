@@ -2,7 +2,12 @@
 
 import { useMemo, useState } from "react";
 import type { Card } from "@/lib/types";
-import { DOMAINS, domainLabel } from "@/lib/types";
+import {
+  DOMAINS,
+  PUBLICATION_TYPES,
+  domainLabel,
+  publicationTypeLabel,
+} from "@/lib/types";
 import { bundlePrompt, driveDownloadUrl, estimateTokens, matchCardsFromText } from "@/lib/export";
 import { useLang } from "@/lib/i18n";
 import CopyButton from "./CopyButton";
@@ -11,6 +16,7 @@ import DownloadButton from "./DownloadButton";
 export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: string }) {
   const { t } = useLang();
   const [domain, setDomain] = useState("");
+  const [publicationType, setPublicationType] = useState("");
   const [listText, setListText] = useState("");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -20,12 +26,17 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
     return cards.filter(
       (c) =>
         (!domain || c.domain === domain) &&
+        (!publicationType || c.publication_type === publicationType) &&
         (!f || c.title.toLowerCase().includes(f) || c.tags.some((tag) => tag.includes(f))),
     );
-  }, [cards, domain, filter]);
+  }, [cards, domain, publicationType, filter]);
 
   const presentDomains = useMemo(
     () => DOMAINS.filter((item) => cards.some((card) => card.domain === item)),
+    [cards],
+  );
+  const presentPublicationTypes = useMemo(
+    () => PUBLICATION_TYPES.filter((item) => cards.some((card) => card.publication_type === item)),
     [cards],
   );
 
@@ -73,6 +84,12 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
             <option key={item} value={item}>{domainLabel(item)}</option>
           ))}
         </select>
+        <select value={publicationType} onChange={(event) => setPublicationType(event.target.value)}>
+          <option value="">{t("cards.allPublicationTypes")}</option>
+          {presentPublicationTypes.map((item) => (
+            <option key={item} value={item}>{publicationTypeLabel(item)}</option>
+          ))}
+        </select>
         <button className="btn" onClick={() => setSelected(new Set([...selected, ...visible.map((c) => c.slug)]))}>
           {t("export.selectAll")}
         </button>
@@ -92,6 +109,9 @@ export default function ExportBuilder({ cards, repo }: { cards: Card[]; repo?: s
               <span className="titles">{c.title}</span>
               <span className="meta-row">
                 <span className="badge domain">{domainLabel(c.domain)}</span>
+                {c.publication_type && (
+                  <span className="badge type">{publicationTypeLabel(c.publication_type)}</span>
+                )}
                 {c.drive.length > 0 && <span className="badge">{t("export.hasFulltext")}</span>}
                 {c.comments.length > 0 && <span className="badge">{c.comments.length} {t("comments.count")}</span>}
                 {c.tags.map((tag) => (

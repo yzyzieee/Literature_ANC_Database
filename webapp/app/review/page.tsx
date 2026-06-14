@@ -1,12 +1,13 @@
 import { getCards, toMeta } from "@/lib/kb";
 import { T } from "@/lib/i18n";
 import ReviewRatings from "@/components/ReviewRatings";
+import { isLiterature } from "@/lib/types";
 
 export const dynamic = "force-static";
 
 export default function ReviewPage() {
   const papers = getCards()
-    .filter((card) => card.folder === "official" && card.type === "paper")
+    .filter((card) => card.folder === "official" && isLiterature(card))
     .sort((a, b) => (b.rating?.weight || 0) - (a.rating?.weight || 0))
     .map(toMeta);
 

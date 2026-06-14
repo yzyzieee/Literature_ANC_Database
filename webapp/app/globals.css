@@ -121,6 +121,14 @@ h2 { font-size: 19px; margin: 28px 0 12px; }
   background: var(--bg);
 }
 .badge.type { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.abstract-box {
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.abstract-box p { margin: 8px 0 0; line-height: 1.65; }
 .badge.domain { background: #ede9fe; color: #5b21b6; border-color: transparent; font-weight: 500; }
 .badge.official { background: var(--green-soft); color: var(--green); border-color: transparent; }
 .badge.pending, .badge.reviewed { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
@@ -200,7 +208,7 @@ h2 { font-size: 19px; margin: 28px 0 12px; }
 .reviewer-box .subtitle { margin: 8px 0 0; font-size: 13px; }
 .review-profile { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin: 18px 0 10px; color: var(--text-2); font-size: 13px; }
 .review-profile b { color: var(--text); font-size: 15px; }
-.review-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.review-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .review-tabs button { padding: 8px 15px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-2); cursor: pointer; }
 .review-tabs button.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .rating-list { display: grid; gap: 14px; }

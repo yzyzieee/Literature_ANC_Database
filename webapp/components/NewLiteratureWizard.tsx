@@ -1,34 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BODY_TEMPLATES } from "@/lib/templates";
-import type { CardType } from "@/lib/types";
-import { DOMAINS, DOMAIN_LABELS, SOURCE_TYPES, TYPE_LABELS } from "@/lib/types";
+import { LITERATURE_BODY_TEMPLATE } from "@/lib/templates";
+import {
+  DOMAINS,
+  DOMAIN_LABELS,
+  PUBLICATION_TYPES,
+  PUBLICATION_TYPE_LABELS,
+} from "@/lib/types";
 import { useLang } from "@/lib/i18n";
 import { extractPdfText } from "@/lib/pdf";
 import { uploadToDrive } from "@/lib/drive";
 
-function kebab(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
 function yamlList(items: string[]): string {
-  return items.length ? `[${items.map((i) => JSON.stringify(i)).join(", ")}]` : "[]";
+  return items.length ? `[${items.map((item) => JSON.stringify(item)).join(", ")}]` : "[]";
 }
 
-export default function NewCardWizard() {
+export default function NewLiteratureWizard() {
   const { t } = useLang();
-  const [type, setType] = useState<CardType>("paper");
   const [domain, setDomain] = useState("");
-  const [sourceType, setSourceType] = useState("paper");
+  const [publicationType, setPublicationType] = useState("journal-paper");
   const [title, setTitle] = useState("");
   const [doi, setDoi] = useState("");
+  const [venue, setVenue] = useState("");
+  const [abstract, setAbstract] = useState("");
   const [citationKey, setCitationKey] = useState("");
   const [authors, setAuthors] = useState("");
   const [year, setYear] = useState("");
@@ -57,25 +52,30 @@ export default function NewCardWizard() {
 
   useEffect(() => {
     fetch("/api/me")
-      .then((response) => response.ok ? response.json() : null)
+      .then((response) => (response.ok ? response.json() : null))
       .then((data) => setCurrentUser(data?.member?.name || ""))
       .catch(() => {});
   }, []);
 
-  const slug = type === "paper" ? citationKey.trim() : kebab(title);
-  const authorList = authors.split(/[;,]/).map((a) => a.trim()).filter(Boolean);
-  const tagList = tags.split(/[,，\s]+/).map((t) => t.trim().toLowerCase()).filter(Boolean);
-  const driveList = drive.split(/\s+/).map((d) => d.trim()).filter(Boolean);
-  const paperMetadataReady = type !== "paper" || Boolean(authorList.length && Number(year));
+  const slug = citationKey.trim();
+  const authorList = authors.split(/[;,]/).map((author) => author.trim()).filter(Boolean);
+  const tagList = tags
+    .split(/[,，\s]+/)
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 6);
+  const driveList = drive.split(/\s+/).map((link) => link.trim()).filter(Boolean);
   const ready = Boolean(
     title.trim() &&
       domain &&
+      publicationType &&
+      authorList.length &&
+      Number(year) &&
       tagList.length &&
-      paperMetadataReady &&
       slug &&
       /^[a-z0-9][a-z0-9-]*$/.test(slug),
   );
-  const archiveSignature = `${sourceType}:${slug}`;
+  const archiveSignature = `${publicationType}:${slug}`;
   const archiveCurrent = Boolean(
     archived &&
       archived.signature === archiveSignature &&
@@ -86,16 +86,19 @@ export default function NewCardWizard() {
 
   const fullMarkdown = () => {
     const today = new Date().toISOString().slice(0, 10);
-    const fm = [
+    const frontmatter = [
       "---",
       `title: ${JSON.stringify(title)}`,
-      `type: ${type}`,
+      "entry_type: literature",
+      `publication_type: ${publicationType}`,
       `domain: ${domain}`,
-      `source_type: ${sourceType}`,
+      `venue: ${JSON.stringify(venue)}`,
+      `doi: ${JSON.stringify(doi)}`,
+      `abstract: ${JSON.stringify(abstract)}`,
       "status: official",
-      ...(type === "paper"
-        ? [`citation_key: ${citationKey.trim()}`, `authors: ${yamlList(authorList)}`, `year: ${year || "null"}`]
-        : []),
+      `citation_key: ${citationKey.trim()}`,
+      `authors: ${yamlList(authorList)}`,
+      `year: ${year || "null"}`,
       `tags: ${yamlList(tagList)}`,
       `drive: ${yamlList(driveList)}`,
       "related: []",
@@ -107,27 +110,38 @@ export default function NewCardWizard() {
       "---",
       "",
     ].join("\n");
-    return fm + (body.trim() ? body.trim() : BODY_TEMPLATES[type].trim()) + "\n";
+    return frontmatter + (body.trim() || LITERATURE_BODY_TEMPLATE.trim()) + "\n";
   };
 
-  const applyCard = (data: {
-    type?: string;
-    domain?: string;
-    source_type?: string;
-    title?: string;
-    authors?: string[];
-    year?: number | null;
-    citation_key?: string;
-    tags?: string[];
-    body?: string;
-  }) => {
-    if (data.type && TYPE_LABELS[data.type as CardType]) setType(data.type as CardType);
-    if (data.domain && DOMAINS.includes(data.domain)) setDomain(data.domain);
-    if (data.source_type) setSourceType(data.source_type);
-    setTitle(data.title || "");
-    setAuthors((data.authors || []).join(", "));
-    setYear(data.year ? String(data.year) : "");
-    setCitationKey(data.citation_key || "");
+  const applyLiterature = (
+    data: {
+      domain?: string;
+      publication_type?: string;
+      title?: string;
+      authors?: string[];
+      year?: number | null;
+      venue?: string;
+      doi?: string;
+      abstract?: string;
+      citation_key?: string;
+      tags?: string[];
+      body?: string;
+    },
+    preserveArchiveIdentity = false,
+  ) => {
+    if (!preserveArchiveIdentity) {
+      if (data.domain && DOMAINS.includes(data.domain)) setDomain(data.domain);
+      if (data.publication_type && PUBLICATION_TYPES.includes(data.publication_type as never)) {
+        setPublicationType(data.publication_type);
+      }
+      setTitle(data.title || "");
+      setAuthors((data.authors || []).join(", "));
+      setYear(data.year ? String(data.year) : "");
+      setCitationKey(data.citation_key || "");
+    }
+    setVenue(data.venue || venue);
+    setDoi(data.doi || doi);
+    setAbstract(data.abstract || "");
     setTags((data.tags || []).join(", "));
     setBody(data.body || "");
   };
@@ -138,20 +152,40 @@ export default function NewCardWizard() {
     setUploadProgress(0);
     setMsg(null);
     try {
-      const result = await uploadToDrive(pdfFile, slug, sourceType, doi, setUploadProgress);
-      const { link } = result;
-      setDrive(link);
-      setArchived({
-        ...result,
-        signature: archiveSignature,
-      });
+      const result = await uploadToDrive(
+        pdfFile,
+        slug,
+        publicationType,
+        doi,
+        setUploadProgress,
+      );
+      setDrive(result.link);
+      setArchived({ ...result, signature: archiveSignature });
+
+      try {
+        const response = await fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ driveFileId: result.id }),
+        });
+        const extracted = await response.json();
+        if (!response.ok) throw new Error(extracted.error);
+        applyLiterature(extracted, true);
+        setMsg({ kind: "ok", text: t("new.driveVisionOk"), link: result.link });
+      } catch (analysisError) {
+        setMsg({
+          kind: "warn",
+          text: `${result.reused ? t("new.driveDuplicate") : t("new.driveUploaded")} ${t("new.originalReadFail")}: ${
+            analysisError instanceof Error ? analysisError.message : analysisError
+          }`,
+          link: result.link,
+        });
+      }
+    } catch (error) {
       setMsg({
-        kind: "ok",
-        text: result.reused ? t("new.driveDuplicate") : t("new.driveUploaded"),
-        link,
+        kind: "warn",
+        text: `${t("new.driveUploadFail")}: ${error instanceof Error ? error.message : error}`,
       });
-    } catch (e) {
-      setMsg({ kind: "warn", text: `${t("new.driveUploadFail")}: ${e instanceof Error ? e.message : e}` });
     } finally {
       setBusy("");
     }
@@ -169,17 +203,20 @@ export default function NewCardWizard() {
     try {
       const text = await extractPdfText(file);
       if (text.length < 80) throw new Error(t("new.pdfNoText"));
-      const res = await fetch("/api/extract", {
+      const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      applyCard(data);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      applyLiterature(data);
       setMsg({ kind: "ok", text: driveUploadEnabled ? t("new.pdfOkUpload") : t("new.pdfOk") });
-    } catch (e) {
-      setMsg({ kind: "warn", text: `${t("new.pdfFail")}: ${e instanceof Error ? e.message : e}` });
+    } catch (error) {
+      setMsg({
+        kind: "warn",
+        text: `${t("new.pdfFail")}: ${error instanceof Error ? error.message : error}`,
+      });
     } finally {
       setBusy("");
     }
@@ -189,16 +226,18 @@ export default function NewCardWizard() {
     setBusy("doi");
     setMsg(null);
     try {
-      const res = await fetch(`/api/doi?doi=${encodeURIComponent(doi.trim())}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const response = await fetch(`/api/doi?doi=${encodeURIComponent(doi.trim())}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       setTitle(data.title || title);
       setAuthors((data.authors || []).join(", "));
       setYear(data.year ? String(data.year) : "");
+      setVenue(data.venue || venue);
+      if (data.publication_type) setPublicationType(data.publication_type);
       if (!citationKey) setCitationKey(data.citation_key || "");
       setMsg({ kind: "ok", text: t("new.doiOk") });
-    } catch (e) {
-      setMsg({ kind: "warn", text: `${t("new.doiFail")}: ${e}` });
+    } catch (error) {
+      setMsg({ kind: "warn", text: `${t("new.doiFail")}: ${error}` });
     } finally {
       setBusy("");
     }
@@ -208,34 +247,34 @@ export default function NewCardWizard() {
     setBusy("draft");
     setMsg(null);
     try {
-      const res = await fetch("/api/draft", {
+      const response = await fetch("/api/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type,
           title,
           authors: authorList,
           year: year ? Number(year) : null,
-          citation_key: citationKey,
+          venue,
+          doi,
           notes,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       setBody(data.body);
       setMsg({ kind: "ok", text: t("new.draftOk") });
-    } catch (e) {
-      setMsg({ kind: "warn", text: `${t("new.draftFail")}: ${e}` });
+    } catch (error) {
+      setMsg({ kind: "warn", text: `${t("new.draftFail")}: ${error}` });
     } finally {
       setBusy("");
     }
   };
 
-  const submitCard = async () => {
+  const submitLiterature = async () => {
     setBusy("commit");
     setMsg(null);
     try {
-      const res = await fetch("/api/commit", {
+      const response = await fetch("/api/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -251,11 +290,11 @@ export default function NewCardWizard() {
             : null,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       setMsg({ kind: "ok", text: `${t("new.prOk")}:`, link: data.card_url });
-    } catch (e) {
-      setMsg({ kind: "warn", text: `${t("new.prFail")}: ${e}` });
+    } catch (error) {
+      setMsg({ kind: "warn", text: `${t("new.prFail")}: ${error}` });
     } finally {
       setBusy("");
     }
@@ -263,11 +302,11 @@ export default function NewCardWizard() {
 
   const download = () => {
     const blob = new Blob([fullMarkdown()], { type: "text/markdown;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${slug || "card"}.md`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const anchor = document.createElement("a");
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = `${slug || "literature"}.md`;
+    anchor.click();
+    URL.revokeObjectURL(anchor.href);
   };
 
   return (
@@ -278,7 +317,7 @@ export default function NewCardWizard() {
           type="file"
           accept="application/pdf"
           style={{ display: "none" }}
-          onChange={(e) => onPdf(e.target.files?.[0])}
+          onChange={(event) => onPdf(event.target.files?.[0])}
         />
         <div className="pdf-zone-main">
           <div>
@@ -303,63 +342,60 @@ export default function NewCardWizard() {
 
       <div className="form-card">
         <label>{t("new.domain")}</label>
-        <select value={domain} onChange={(e) => setDomain(e.target.value)}>
+        <select value={domain} onChange={(event) => setDomain(event.target.value)}>
           <option value="">{t("new.domainPick")}</option>
-          {DOMAINS.map((d) => (
-            <option key={d} value={d}>{DOMAIN_LABELS[d] || d}</option>
+          {DOMAINS.map((item) => (
+            <option key={item} value={item}>{DOMAIN_LABELS[item] || item}</option>
           ))}
         </select>
 
-        <label>{t("new.type")}</label>
-        <select value={type} onChange={(e) => setType(e.target.value as CardType)}>
-          {(Object.keys(TYPE_LABELS) as CardType[]).map((ct) => (
-            <option key={ct} value={ct}>{TYPE_LABELS[ct]}</option>
+        <label>{t("new.publicationType")}</label>
+        <select value={publicationType} onChange={(event) => setPublicationType(event.target.value)}>
+          {PUBLICATION_TYPES.map((item) => (
+            <option key={item} value={item}>{PUBLICATION_TYPE_LABELS[item]}</option>
           ))}
         </select>
 
-        <label>{t("new.sourceType")}</label>
-        <select value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
-          {SOURCE_TYPES.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        <label>{t("new.doi")}</label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={doi} onChange={(event) => setDoi(event.target.value)} placeholder="10.1109/PROC.1975.10036" />
+          <button className="btn" onClick={lookupDoi} disabled={!doi.trim() || busy !== ""}>
+            {busy === "doi" ? t("new.fetching") : t("new.fetch")}
+          </button>
+        </div>
 
-        {type === "paper" && (
-          <>
-            <label>{t("new.doi")}</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input value={doi} onChange={(e) => setDoi(e.target.value)} placeholder="10.1109/PROC.1975.10036" />
-              <button className="btn" onClick={lookupDoi} disabled={!doi.trim() || busy !== ""}>
-                {busy === "doi" ? t("new.fetching") : t("new.fetch")}
-              </button>
-            </div>
-          </>
-        )}
+        <label>{t("new.literatureTitle")}</label>
+        <input value={title} onChange={(event) => setTitle(event.target.value)} />
 
-        <label>{t("new.cardTitle")}</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <label>{t("new.citationKey")}</label>
+        <input value={citationKey} onChange={(event) => setCitationKey(event.target.value)} placeholder="widrow1975adaptive" />
 
-        {type === "paper" && (
-          <>
-            <label>{t("new.citationKey")}</label>
-            <input value={citationKey} onChange={(e) => setCitationKey(e.target.value)} placeholder="widrow1975adaptive" />
-            <label>{t("new.authors")}</label>
-            <input value={authors} onChange={(e) => setAuthors(e.target.value)} />
-            <label>{t("new.year")}</label>
-            <input value={year} onChange={(e) => setYear(e.target.value)} />
-          </>
-        )}
+        <label>{t("new.authors")}</label>
+        <input value={authors} onChange={(event) => setAuthors(event.target.value)} />
+
+        <label>{t("new.year")}</label>
+        <input value={year} onChange={(event) => setYear(event.target.value)} inputMode="numeric" />
+
+        <label>{t("new.venue")}</label>
+        <input value={venue} onChange={(event) => setVenue(event.target.value)} placeholder="IEEE/ACM Transactions on Audio, Speech, and Language Processing" />
+
+        <label>{t("new.abstract")}</label>
+        <textarea rows={5} value={abstract} onChange={(event) => setAbstract(event.target.value)} />
 
         <label>{t("new.tags")}</label>
-        <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="anc, adaptive-filter" />
+        <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="anc, fxlms, secondary-path" />
 
         <label>{t("new.drive")}</label>
-        <input value={drive} onChange={(e) => setDrive(e.target.value)} />
+        <input value={drive} onChange={(event) => setDrive(event.target.value)} />
 
         <label>{t("new.notes")}</label>
-        <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("new.notesPh")} />
+        <textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={t("new.notesPh")} />
 
-        {slug && <p className="subtitle" style={{ margin: "10px 0 0" }}>{t("new.fileName")}: <code>official/{slug}.md</code></p>}
+        {slug && (
+          <p className="subtitle" style={{ margin: "10px 0 0" }}>
+            {t("new.fileName")}: <code>official/{slug}.md</code>
+          </p>
+        )}
       </div>
 
       <div className="form-card">
@@ -368,11 +404,11 @@ export default function NewCardWizard() {
           <button className="btn" onClick={draft} disabled={!title.trim() || busy !== ""}>
             {busy === "draft" ? t("new.drafting") : t("new.draft")}
           </button>
-          <button className="btn" onClick={() => setBody(BODY_TEMPLATES[type].trim())} disabled={busy !== ""}>
+          <button className="btn" onClick={() => setBody(LITERATURE_BODY_TEMPLATE.trim())} disabled={busy !== ""}>
             {t("new.blank")}
           </button>
         </div>
-        <textarea rows={18} value={body} onChange={(e) => setBody(e.target.value)} />
+        <textarea rows={24} value={body} onChange={(event) => setBody(event.target.value)} />
       </div>
 
       {driveUploadEnabled && pdfFile && (
@@ -380,7 +416,7 @@ export default function NewCardWizard() {
           <h2 style={{ marginTop: 0 }}>{t("new.archiveTitle")}</h2>
           <p className="subtitle">{t("new.archiveHint")}</p>
           <p className="subtitle">
-            {t("new.archiveTarget")}: <code>{sourceType}/NNNN_{slug || "citation-key"}.pdf</code>
+            {t("new.archiveTarget")}: <code>{publicationType}/NNNN_{slug || "citation-key"}.pdf</code>
           </p>
           {busy === "drive" && (
             <div className="upload-progress" aria-label={`${uploadProgress}%`}>
@@ -402,9 +438,7 @@ export default function NewCardWizard() {
             )}
           </div>
           {!ready && <p className="subtitle">{t("new.archiveRequired")}</p>}
-          {archived && !archiveCurrent && (
-            <div className="notice warn">{t("new.archiveChanged")}</div>
-          )}
+          {archived && !archiveCurrent && <div className="notice warn">{t("new.archiveChanged")}</div>}
         </div>
       )}
 
@@ -415,7 +449,7 @@ export default function NewCardWizard() {
       )}
 
       <div className="btn-row">
-        <button className="btn primary" onClick={submitCard} disabled={!readyToSubmit || busy !== ""}>
+        <button className="btn primary" onClick={submitLiterature} disabled={!readyToSubmit || busy !== ""}>
           {busy === "commit" ? t("new.submitting") : t("new.submitPr")}
         </button>
         <button className="btn" onClick={download} disabled={!ready}>{t("new.download")}</button>
@@ -424,9 +458,7 @@ export default function NewCardWizard() {
         </button>
       </div>
       {currentUser && <p className="subtitle">{t("new.publishingAs")}: <b>{currentUser}</b></p>}
-      {ready && needsArchive && !archiveCurrent && (
-        <p className="subtitle">{t("new.submitNeedsArchive")}</p>
-      )}
+      {ready && needsArchive && !archiveCurrent && <p className="subtitle">{t("new.submitNeedsArchive")}</p>}
     </>
   );
 }

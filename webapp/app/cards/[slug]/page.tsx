@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getCard, getCards, toMeta } from "@/lib/kb";
 import { renderCardBody } from "@/lib/markdown";
 import { cardToPrompt } from "@/lib/export";
-import { STATUS_LABELS, TYPE_LABELS } from "@/lib/types";
+import { domainLabel, publicationTypeLabel } from "@/lib/types";
 import { T } from "@/lib/i18n";
 import CopyButton from "@/components/CopyButton";
 import CommentsPanel from "@/components/CommentsPanel";
@@ -32,8 +32,10 @@ export default async function CardPage({ params }: { params: Promise<{ slug: str
       <div className="detail-header">
         <h1>{card.title}</h1>
         <div className="meta-row" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <span className="badge type">{TYPE_LABELS[card.type]}</span>
-          <span className={`badge ${card.status}`}>{STATUS_LABELS[card.status]}</span>
+          <span className="badge domain">{domainLabel(card.domain)}</span>
+          {card.publication_type && (
+            <span className="badge type">{publicationTypeLabel(card.publication_type)}</span>
+          )}
           {card.year && <span className="badge">{card.year}</span>}
           {card.tags.map((t) => (
             <span key={t} className="badge">#{t}</span>
@@ -44,6 +46,21 @@ export default async function CardPage({ params }: { params: Promise<{ slug: str
         )}
         {card.citation_key && (
           <div className="kv"><b><T k="detail.citationKey" /></b> · <code>{card.citation_key}</code></div>
+        )}
+        {card.venue && (
+          <div className="kv"><b><T k="detail.venue" /></b> · {card.venue}</div>
+        )}
+        {card.doi && (
+          <div className="kv">
+            <b><T k="detail.doi" /></b> ·{" "}
+            <a href={`https://doi.org/${card.doi}`} target="_blank" rel="noreferrer">{card.doi}</a>
+          </div>
+        )}
+        {card.abstract && (
+          <div className="abstract-box">
+            <b><T k="detail.abstract" /></b>
+            <p>{card.abstract}</p>
+          </div>
         )}
         {card.rating && (
           <div className="rating-summary detail-rating">

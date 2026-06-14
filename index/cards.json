@@ -1,69 +1,15 @@
 [
   {
-    "slug": "fxlms",
-    "path": "official/fxlms.md",
-    "folder": "official",
-    "title": "Filtered-x LMS (FxLMS)",
-    "type": "algorithm",
-    "domain": "active-noise-control",
-    "source_type": "",
-    "status": "official",
-    "tags": [
-      "anc",
-      "adaptive-filter",
-      "fxlms"
-    ],
-    "authors": [],
-    "year": null,
-    "citation_key": "",
-    "related": [
-      "active-noise-control",
-      "widrow1975adaptive"
-    ],
-    "drive": [],
-    "created": "2026-06-12",
-    "rating": null,
-    "comments": [],
-    "uploaded_by": "",
-    "uploaded_at": "",
-    "summary": "FxLMS is the workhorse adaptive algorithm of active noise control: standard LMS diverges when a secondary path S(z) sits between the controller output and the error sensor, so FxLMS filters the reference signal through an estimate Ŝ(z) before the weight update, restoring gradient alignment."
-  },
-  {
-    "slug": "active-noise-control",
-    "path": "official/active-noise-control.md",
-    "folder": "official",
-    "title": "Active noise control (ANC)",
-    "type": "concept",
-    "domain": "active-noise-control",
-    "source_type": "",
-    "status": "official",
-    "tags": [
-      "anc",
-      "acoustics"
-    ],
-    "authors": [],
-    "year": null,
-    "citation_key": "",
-    "related": [
-      "widrow1975adaptive",
-      "fxlms"
-    ],
-    "drive": [],
-    "created": "2026-06-12",
-    "rating": null,
-    "comments": [],
-    "uploaded_by": "",
-    "uploaded_at": "",
-    "summary": "Active noise control cancels unwanted sound by generating an \"anti-noise\" signal of equal amplitude and opposite phase through secondary sources (loudspeakers), exploiting destructive interference. It is most effective at low frequencies where passive absorption is bulky and inefficient."
-  },
-  {
     "slug": "widrow1975adaptive",
     "path": "official/widrow1975adaptive.md",
     "folder": "official",
     "title": "Adaptive noise cancelling: principles and applications",
-    "type": "paper",
+    "entry_type": "literature",
+    "publication_type": "journal-paper",
     "domain": "active-noise-control",
-    "source_type": "paper",
+    "venue": "Proceedings of the IEEE",
+    "doi": "10.1109/PROC.1975.10036",
+    "abstract": "",
     "status": "official",
     "tags": [
       "anc",
@@ -99,20 +45,24 @@
     "comments": [],
     "uploaded_by": "",
     "uploaded_at": "",
-    "summary": "The foundational paper on adaptive noise cancelling: a reference input correlated with the noise (but not the signal) is adaptively filtered and subtracted from the primary input, with the LMS algorithm driving the filter towards the Wiener solution without prior knowledge of signal statistics."
+    "summary": "The foundational paper on adaptive noise cancelling: a reference input correlated with the noise (but not the signal) is adaptively filtered and subtracted from the primary input, with the LMS algorithm driving the filter towards the Wiener solution without prior knowledge of signal statistics.",
+    "legacy_type": ""
   },
   {
     "slug": "xiao2025spatially",
     "path": "official/xiao2025spatially.md",
     "folder": "official",
     "title": "Spatially Selective Active Noise Control for Open-Fitting Hearables with Acausal Optimization",
-    "type": "paper",
+    "entry_type": "literature",
+    "publication_type": "conference-paper",
     "domain": "active-noise-control",
-    "source_type": "conference",
+    "venue": "Forum Acusticum Euronoise 2025",
+    "doi": "10.61782/fa.2025.0817",
+    "abstract": "An acausal relative-impulse-response formulation is introduced for spatially selective active noise control in open-fitting hearables. Simulations evaluate speech distortion, noise reduction, and SNR improvement across delays and degrees of acausality.",
     "status": "official",
     "tags": [
-      "audio",
-      "noise-control",
+      "anc",
+      "spatially-selective-anc",
       "hearables",
       "acausal-optimization"
     ],
@@ -129,22 +79,27 @@
     "comments": [],
     "uploaded_by": "",
     "uploaded_at": "",
-    "summary": "This paper proposes an enhanced approach to Spatially Selective Active Noise Control (SSANC) for open-fitting hearables. The core innovation is the incorporation of acausal relative impulse responses (ReIRs) into the optimization process, aiming to improve performance over existing causal methods. The system is evaluated through simulations using a KEMAR dummy head with open-fitting hearables, considering both speech and noise sources at various locations. Performance is measured by speech distortion, noise reduction, and signal-to-noise ratio (SNR) improvement. The results consistently demonstrate that the acausal optimization strategy yields superior performance across all metrics compared to the causal approach, particularly in accurately characterizing the desired source's acoustic path."
+    "summary": "This paper proposes an enhanced approach to Spatially Selective Active Noise Control (SSANC) for open-fitting hearables. The core innovation is the incorporation of acausal relative impulse responses (ReIRs) into the optimization process, aiming to improve performance over existing causal methods. The system is evaluated through simulations using a KEMAR dummy head with open-fitting hearables, considering both speech and noise sources at various locations. Performance is measured by speech distortion, noise reduction, and signal-to-noise ratio (SNR) improvement. The results consistently demonstrate that the acausal optimization strategy yields superior performance across all metrics compared to the causal approach, particularly in accurately characterizing the desired source's acoustic path.",
+    "legacy_type": ""
   },
   {
     "slug": "xiao2026robust",
     "path": "official/xiao2026robust.md",
     "folder": "official",
     "title": "Robust Soft-Constrained Spatially Selective Active Noise Control for Hearables Under Secondary Path Variations",
-    "type": "paper",
+    "entry_type": "literature",
+    "publication_type": "preprint",
     "domain": "active-noise-control",
-    "source_type": "paper",
+    "venue": "arXiv",
+    "doi": "10.48550/arXiv.2605.17407",
+    "abstract": "A robust soft-constrained spatially selective ANC design averages its objective over measured secondary-path estimates. Simulations and real-time experiments show a narrower performance spread under path mismatch with a small reduction in mean performance.",
     "status": "official",
     "tags": [
-      "audio",
-      "noise-control",
-      "hearables",
-      "anc"
+      "anc",
+      "spatially-selective-anc",
+      "secondary-path",
+      "robust-optimization",
+      "hearables"
     ],
     "authors": [
       "Tong Xiao",
@@ -163,6 +118,72 @@
     "comments": [],
     "uploaded_by": "",
     "uploaded_at": "",
-    "summary": "This paper addresses the challenge of secondary path variations in spatially selective active noise control (SSANC) for hearables. SSANC aims to attenuate noise from specific directions while preserving desired speech. A key practical issue is that the acoustic path from the hearable's loudspeaker to the inner error microphone (the secondary path) can vary significantly between users and due to device fit. This variation can degrade SSANC performance and compromise system stability. The authors propose a robust soft-constrained optimization framework that computes a single control filter by minimizing the average cost over a set of secondary path estimates derived from human measurements. This approach aims to provide consistent performance even when the exact secondary path is unknown."
+    "summary": "This paper addresses the challenge of secondary path variations in spatially selective active noise control (SSANC) for hearables. SSANC aims to attenuate noise from specific directions while preserving desired speech. A key practical issue is that the acoustic path from the hearable's loudspeaker to the inner error microphone (the secondary path) can vary significantly between users and due to device fit. This variation can degrade SSANC performance and compromise system stability. The authors propose a robust soft-constrained optimization framework that computes a single control filter by minimizing the average cost over a set of secondary path estimates derived from human measurements. This approach aims to provide consistent performance even when the exact secondary path is unknown.",
+    "legacy_type": ""
+  },
+  {
+    "slug": "active-noise-control",
+    "path": "official/active-noise-control.md",
+    "folder": "official",
+    "title": "Active noise control (ANC)",
+    "entry_type": "legacy-note",
+    "publication_type": "",
+    "domain": "active-noise-control",
+    "venue": "",
+    "doi": "",
+    "abstract": "",
+    "status": "official",
+    "tags": [
+      "anc",
+      "acoustics"
+    ],
+    "authors": [],
+    "year": null,
+    "citation_key": "",
+    "related": [
+      "widrow1975adaptive",
+      "fxlms"
+    ],
+    "drive": [],
+    "created": "2026-06-12",
+    "rating": null,
+    "comments": [],
+    "uploaded_by": "",
+    "uploaded_at": "",
+    "summary": "Active noise control cancels unwanted sound by generating an \"anti-noise\" signal of equal amplitude and opposite phase through secondary sources (loudspeakers), exploiting destructive interference. It is most effective at low frequencies where passive absorption is bulky and inefficient.",
+    "legacy_type": "concept"
+  },
+  {
+    "slug": "fxlms",
+    "path": "official/fxlms.md",
+    "folder": "official",
+    "title": "Filtered-x LMS (FxLMS)",
+    "entry_type": "legacy-note",
+    "publication_type": "",
+    "domain": "active-noise-control",
+    "venue": "",
+    "doi": "",
+    "abstract": "",
+    "status": "official",
+    "tags": [
+      "anc",
+      "adaptive-filter",
+      "fxlms"
+    ],
+    "authors": [],
+    "year": null,
+    "citation_key": "",
+    "related": [
+      "active-noise-control",
+      "widrow1975adaptive"
+    ],
+    "drive": [],
+    "created": "2026-06-12",
+    "rating": null,
+    "comments": [],
+    "uploaded_by": "",
+    "uploaded_at": "",
+    "summary": "FxLMS is the workhorse adaptive algorithm of active noise control: standard LMS diverges when a secondary path S(z) sits between the controller output and the error sensor, so FxLMS filters the reference signal through an estimate Ŝ(z) before the weight update, restoring gradient alignment.",
+    "legacy_type": "algorithm"
   }
 ]

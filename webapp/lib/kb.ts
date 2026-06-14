@@ -6,8 +6,9 @@ import type {
   Card,
   CardMeta,
   CardStatus,
-  CardType,
   CommentEntry,
+  EntryType,
+  PublicationType,
   RatingAggregate,
   RatingEntry,
 } from "./types";
@@ -110,13 +111,29 @@ function parseCard(filePath: string, folder: string): Card | null {
   try {
     const raw = fs.readFileSync(filePath, "utf-8");
     const { data, content } = matter(raw);
+    const legacyType = String(data.type ?? "");
+    const legacySourceType = String(data.source_type ?? "");
+    const entryType: EntryType =
+      data.entry_type === "literature" || legacyType === "paper" ? "literature" : "legacy-note";
+    const publicationTypeMap: Record<string, PublicationType> = {
+      paper: "journal-paper",
+      conference: "conference-paper",
+      book: "book",
+      patent: "patent",
+      other: "other",
+    };
     return {
       slug: path.basename(filePath, ".md"),
       folder,
       title: String(data.title ?? path.basename(filePath, ".md")),
-      type: (data.type ?? "concept") as CardType,
+      entry_type: entryType,
+      publication_type: String(
+        data.publication_type ?? publicationTypeMap[legacySourceType] ?? "",
+      ) as PublicationType | "",
       domain: String(data.domain ?? ""),
-      source_type: String(data.source_type ?? ""),
+      venue: String(data.venue ?? ""),
+      doi: String(data.doi ?? ""),
+      abstract: String(data.abstract ?? ""),
       status: (data.status ?? "pending") as CardStatus,
       tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
       authors: Array.isArray(data.authors) ? data.authors.map(String) : [],
@@ -136,6 +153,7 @@ function parseCard(filePath: string, folder: string): Card | null {
       pdf_file_name: String(data.pdf_file_name ?? ""),
       pdf_reused: Boolean(data.pdf_reused),
       activity: parseActivity(data.activity),
+      legacy_type: legacyType,
       body: content,
     };
   } catch {

@@ -1,4 +1,5 @@
 import type { Card } from "./types";
+import { domainLabel, publicationTypeLabel } from "./types";
 
 /** Turn a Drive view link into a direct-download link (one-click PDF download). */
 export function driveDownloadUrl(link: string): string {
@@ -10,6 +11,11 @@ export function cardToPrompt(card: Card, repo?: string): string {
   const meta: string[] = [];
   if (card.authors.length) meta.push(`Authors: ${card.authors.join(", ")}`);
   if (card.year) meta.push(`Year: ${card.year}`);
+  if (card.publication_type) meta.push(`Publication type: ${publicationTypeLabel(card.publication_type)}`);
+  if (card.domain) meta.push(`Research domain: ${domainLabel(card.domain)}`);
+  if (card.venue) meta.push(`Venue: ${card.venue}`);
+  if (card.doi) meta.push(`DOI: ${card.doi}`);
+  if (card.abstract) meta.push(`Abstract: ${card.abstract}`);
   if (card.citation_key) meta.push(`Citation key: ${card.citation_key}`);
   if (card.tags.length) meta.push(`Tags: ${card.tags.join(", ")}`);
   if (card.rating) {
@@ -21,7 +27,7 @@ export function cardToPrompt(card: Card, repo?: string): string {
   meta.push(`Status: ${card.status}`);
 
   const lines = [
-    `## [${card.type}] ${card.title}`,
+    `## ${card.title}`,
     "",
     meta.join(" · "),
   ];
@@ -55,16 +61,16 @@ export function cardToPrompt(card: Card, repo?: string): string {
 
 export function bundlePrompt(cards: Card[], repo?: string): string {
   const header = [
-    "# Our audio research knowledge base — use this as your library",
+    "# Audio Literature Hub export — use this as trusted group context",
     "",
-    `Below are ${cards.length} English knowledge cards from our group's library (audio / ANC / signal processing).`,
-    "Each card has metadata, a distilled summary, attributed team member comments, and — when a PDF exists — a direct download link.",
+    `Below are ${cards.length} English literature records from our group's audio research library.`,
+    "Each record has publication metadata, a structured reading summary, attributed team comments, and — when available — a direct PDF link.",
     "",
     "How to work with me:",
-    "- Treat these cards as your trusted knowledge base. I will tell you what direction or question I want to research — the topic is mine to choose.",
-    "- Answer using these cards as the primary source. If the library does not cover something I ask, say so explicitly rather than guessing.",
+    "- Treat these records as trusted group context. I will tell you what direction or question I want to research.",
+    "- Answer using these records as the primary source. If the library does not cover something I ask, say so explicitly rather than guessing.",
     "- Treat `Team member comments` as attributed interpretation and practical experience, not as verified claims from the original paper.",
-    "- Whenever you recommend or cite a paper, ALWAYS list it as: `<title> — <citation_key> — <download link>`, so I can fetch the originals. Only use links and papers that appear in the cards; never invent them.",
+    "- Whenever you recommend or cite a paper, ALWAYS list it as: `<title> — <citation_key> — <download link>`, so I can fetch the originals. Only use links and papers that appear in these records; never invent them.",
     "- A good answer usually ends with a short reference list in that format.",
     "",
     "---",

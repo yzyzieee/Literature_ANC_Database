@@ -1,13 +1,16 @@
 ---
 title: "Robust Soft-Constrained Spatially Selective Active Noise Control for Hearables Under Secondary Path Variations"
-type: paper
+entry_type: literature
 domain: active-noise-control
-source_type: paper
+publication_type: preprint
+venue: arXiv
+doi: 10.48550/arXiv.2605.17407
+abstract: "A robust soft-constrained spatially selective ANC design averages its objective over measured secondary-path estimates. Simulations and real-time experiments show a narrower performance spread under path mismatch with a small reduction in mean performance."
 status: official
 citation_key: xiao2026robust
 authors: ["Tong Xiao", "Reinhild Roden", "Matthias Blau", "Simon Doclo"]
 year: 2026
-tags: ["audio", "noise-control", "hearables", "anc"]
+tags: ["anc", "spatially-selective-anc", "secondary-path", "robust-optimization", "hearables"]
 drive: ["https://drive.google.com/file/d/169kOYOzTtUgqYjPNuKq5fUHW2Si3_OLR/view?usp=drivesdk"]
 related: []
 created: 2026-06-13
@@ -16,7 +19,7 @@ reviewed_by: []
 ## Summary
 This paper addresses the challenge of secondary path variations in spatially selective active noise control (SSANC) for hearables. SSANC aims to attenuate noise from specific directions while preserving desired speech. A key practical issue is that the acoustic path from the hearable's loudspeaker to the inner error microphone (the secondary path) can vary significantly between users and due to device fit. This variation can degrade SSANC performance and compromise system stability. The authors propose a robust soft-constrained optimization framework that computes a single control filter by minimizing the average cost over a set of secondary path estimates derived from human measurements. This approach aims to provide consistent performance even when the exact secondary path is unknown.
 
-## Key points
+## Problem
 *   **Problem:** Secondary path variations in hearables cause performance degradation and instability in SSANC systems.
 *   **Goal:** Develop a robust SSANC framework that is resilient to these variations.
 *   **Proposed Solution:** A robust soft-constrained optimization framework that minimizes the average cost over a set of secondary path estimates.
@@ -45,15 +48,27 @@ Three evaluation cases were considered:
 
 Performance was evaluated using metrics such as noise reduction (NR), intelligibility-weighted spectral distortion (SD intellig), Perceptual Evaluation of Speech Quality (PESQ), and Extended Short-Term Objective Intelligibility (ESTOI).
 
-## Results
+## Key results
 Simulations and real-time experiments demonstrated that:
 *   The **matched case** achieved the best mean performance across all metrics but had a narrow performance spread.
 *   The **mismatched case** showed a significantly wider performance range, especially for noise reduction (up to 6 dB spread in the 5th-95th percentile), indicating substantial performance variability.
 *   The **proposed robust case** achieved mean performance slightly below the matched case but comparable to the mismatched case. Crucially, it substantially narrowed the performance spread (5th-95th percentile range), providing more consistent and reliable performance across various secondary path conditions.
 *   Spectra of speech and noise components at the error microphones confirmed the simulation findings, showing good agreement between simulated and experimental results for both matched and robust cases.
 
-## My notes
+## Strengths
+
+The work targets a practical source of deployment failure and evaluates robustness using both simulations and real-time experiments. Reporting performance distributions rather than only mean values makes the consistency gain visible.
+
+## Limitations
+
+The robust filter depends on how representative the secondary-path set is of future users and fits. The average-cost formulation may not protect against rare worst-case paths, and the trade-off between mean performance and spread requires application-specific tuning.
+
+## Relevance to our group
 The paper presents a practical solution to a common problem in hearable ANC: the variability of the secondary path. The robust optimization approach, by averaging over a set of path estimates, effectively smooths out the performance fluctuations that occur when a filter is optimized for a single, potentially inaccurate, path. This is particularly valuable for hearables where individual fitting and ear canal acoustics lead to significant path variations. The use of human measurement-derived spectral variations to model these paths adds to the practical relevance. The experimental validation on a real-time platform is a strong point, confirming the simulation results. The trade-off between slightly reduced mean performance and significantly improved robustness is a key takeaway, suggesting this approach is well-suited for real-world hearable applications.
+
+## Notes
+
+Compare average-cost robustness with worst-case and distributionally robust formulations before selecting a controller for deployment.
 
 ## References
 [1] S. M. Kuo and D. R. Morgan, Active noise control systems: Algorithms and DSP implementations. Wiley, 1996.

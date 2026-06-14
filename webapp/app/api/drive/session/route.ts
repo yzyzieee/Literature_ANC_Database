@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { driveConfigured, getDriveAccessToken } from "@/lib/google";
+import { PUBLICATION_TYPES } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SOURCE_TYPES = new Set(["paper", "conference", "book", "patent", "other"]);
+const VALID_PUBLICATION_TYPES = new Set<string>(PUBLICATION_TYPES);
 
 interface DriveFile {
   id: string;
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json()) as {
     base?: string;
-    sourceType?: string;
+    publicationType?: string;
     mimeType?: string;
     size?: number;
     doi?: string;
@@ -127,7 +128,9 @@ export async function POST(req: NextRequest) {
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-+|-+$/g, "") || "file";
-  const sourceType = SOURCE_TYPES.has(body.sourceType || "") ? body.sourceType! : "other";
+  const publicationType = VALID_PUBLICATION_TYPES.has(body.publicationType || "")
+    ? body.publicationType!
+    : "other";
   const doi = normalizedDoi(body.doi);
   const username = req.headers.get("x-kb-user") || "unknown";
   const uploadedAt = new Date().toISOString();
@@ -159,7 +162,7 @@ export async function POST(req: NextRequest) {
 
     const rootId = process.env.DRIVE_FOLDER_ID;
     const parentId = rootId
-      ? await findOrCreateSubfolder(token, rootId, sourceType)
+      ? await findOrCreateSubfolder(token, rootId, publicationType)
       : undefined;
     const name = `${nextId(files)}_${base}.pdf`;
 
@@ -178,6 +181,7 @@ export async function POST(req: NextRequest) {
           ...(parentId ? { parents: [parentId] } : {}),
           appProperties: {
             literatureKey: base,
+            publicationType,
             uploadedBy: username,
             uploadedAt,
             ...(doi ? { doi } : {}),

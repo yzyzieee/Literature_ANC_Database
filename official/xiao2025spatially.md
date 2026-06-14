@@ -1,13 +1,16 @@
 ---
 title: "Spatially Selective Active Noise Control for Open-Fitting Hearables with Acausal Optimization"
-type: paper
+entry_type: literature
 domain: active-noise-control
-source_type: conference
+publication_type: conference-paper
+venue: Forum Acusticum Euronoise 2025
+doi: 10.61782/fa.2025.0817
+abstract: "An acausal relative-impulse-response formulation is introduced for spatially selective active noise control in open-fitting hearables. Simulations evaluate speech distortion, noise reduction, and SNR improvement across delays and degrees of acausality."
 status: official
 citation_key: xiao2025spatially
 authors: ["Tong Xiao", "Simon Doclo"]
 year: 2025
-tags: ["audio", "noise-control", "hearables", "acausal-optimization"]
+tags: ["anc", "spatially-selective-anc", "hearables", "acausal-optimization"]
 drive: []
 related: []
 created: 2026-06-13
@@ -16,7 +19,7 @@ reviewed_by: []
 ## Summary
 This paper proposes an enhanced approach to Spatially Selective Active Noise Control (SSANC) for open-fitting hearables. The core innovation is the incorporation of acausal relative impulse responses (ReIRs) into the optimization process, aiming to improve performance over existing causal methods. The system is evaluated through simulations using a KEMAR dummy head with open-fitting hearables, considering both speech and noise sources at various locations. Performance is measured by speech distortion, noise reduction, and signal-to-noise ratio (SNR) improvement. The results consistently demonstrate that the acausal optimization strategy yields superior performance across all metrics compared to the causal approach, particularly in accurately characterizing the desired source's acoustic path.
 
-## Key points
+## Problem
 *   **Acausal ReIRs for Improved Performance:** The study introduces acausal ReIRs into the SSANC optimization, allowing for a more accurate modeling of the desired source's acoustic path compared to purely causal filters.
 *   **Superior Metrics:** Acausal optimization consistently outperforms causal methods in reducing speech distortion, increasing noise reduction, and improving SNR.
 *   **Reduced Sensitivity to Delay:** The acausal approach shows less sensitivity to the selection of delay parameters, offering more robust performance.
@@ -32,7 +35,7 @@ The optimization problem is formulated as minimizing the expected squared error 
 
 Simulations were conducted using a KEMAR dummy head with open-fitting hearables. The setup included multiple outer microphones, one inner error microphone, and a loudspeaker as the secondary source. Two acoustic scenarios were used: one with a desired speech source and one undesired speech source, and another with a desired speech source and multiple noise sources. Performance was evaluated using intelligibility-weighted spectral distortion (SD_intellig), noise reduction (NR), and SNR improvement (DeltaSNR).
 
-## Results
+## Key results
 The simulations revealed that the acausal optimization strategy consistently outperformed the causal approach. 
 
 *   **Speech Distortion:** Acausal optimization significantly reduced speech distortion. For instance, in the first scenario with a specific regularization parameter (`beta`), causal optimization resulted in speech distortion around -15 dB for optimal delays, while acausal optimization (with `L_a = 22`) reduced this to approximately -24 dB.
@@ -42,8 +45,20 @@ The simulations revealed that the acausal optimization strategy consistently out
 *   **Degree of Acausality:** Analysis of varying `L_a` values showed that noise reduction remained stable, while speech distortion decreased and SNR improvement increased as `L_a` grew, stabilizing around `L_a = 12`.
 *   **Scenario Comparison:** Performance was generally better in the simpler first scenario compared to the more complex second scenario with multiple noise sources, but the trend of acausal superiority remained consistent.
 
-## My notes
+## Strengths
+
+The paper isolates the effect of acausal relative impulse responses and evaluates the speech-preservation/noise-reduction trade-off using several complementary metrics. Reduced delay sensitivity is especially relevant to practical system design.
+
+## Limitations
+
+The evidence is simulation-based and uses a specific hearable and acoustic setup. Generalization to individual ear acoustics, changing fits, transfer-function uncertainty, and real-time implementation remains to be established.
+
+## Relevance to our group
 The paper presents a compelling argument for using acausal filters in SSANC for hearables. The ability to better model the desired source's path seems to be the key advantage. The results clearly show that acausal optimization can achieve better noise suppression while simultaneously minimizing distortion of the desired speech, a critical trade-off in hearable applications. The reduced sensitivity to delay is also a significant practical benefit, simplifying system design and calibration. The figures, particularly Figure 3 and 4, visually confirm the superiority of the acausal approach across different scenarios and regularization parameters. Figure 5 further solidifies the benefit of increasing the degree of acausality up to a certain point. The method appears robust and offers a clear path for improving the performance of next-generation hearable devices.
+
+## Notes
+
+Verify the delay and acausality settings against any planned real-time implementation before reusing the reported operating points.
 
 ## References
 [1] S. J. Elliott, Signal processing for active control. Academic Press, 2000.

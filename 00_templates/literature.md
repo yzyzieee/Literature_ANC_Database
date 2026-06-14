@@ -1,4 +1,26 @@
-export const LITERATURE_BODY_TEMPLATE = `## Summary
+---
+title: ""
+entry_type: literature
+publication_type: journal-paper
+domain: ""
+venue: ""
+doi: ""
+abstract: ""
+status: official
+citation_key: ""
+authors: []
+year:
+tags: []
+drive: []
+related: []
+created: ""
+reviewed_by: []
+rating: null
+ratings: []
+comments: []
+---
+
+## Summary
 
 One-paragraph summary of the paper.
 
@@ -31,4 +53,3 @@ How this paper relates to our current research directions.
 Team-specific observations, implementation thoughts, or TODOs.
 
 ## References
-`;

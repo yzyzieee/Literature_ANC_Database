@@ -1,54 +1,69 @@
-# Audio Research Knowledge Base | 音频研究知识库
+# Audio Literature Hub
 
-Collaborative knowledge base for audio / ANC / signal processing research. Cards are written in English; the web app UI can switch between English and Chinese.
-面向音频 / 主动降噪 / 信号处理方向的协作研究知识库。知识卡统一用英文撰写；Web 应用界面可在中英文之间切换。
+A paper-first literature management system for an audio research group.
 
-> **Formal rule | 正式规则**: PDFs stay in Google Drive; cards, templates, index and scripts stay in this repo.
-> PDF 原文存放在 Google Drive；卡片、模板、索引与脚本存放在本仓库。
+The system archives PDFs, extracts structured publication metadata, assigns each
+paper to a research domain, supports team ratings and attributed comments, and
+exports trusted literature context for LLM-assisted research.
 
-## Repository layout | 目录结构
+一个以论文为核心的组内文献管理系统。系统负责归档 PDF、自动提取论文元数据、
+按研究方向分类、支持组内评分和带署名评论，并把高可信文献上下文导出给 LLM
+用于后续调研。
 
+## Product scope
+
+1. Collect and normalize research PDFs.
+2. Extract publication metadata and structured reading records.
+3. Organize literature by research domain and publication type.
+4. Capture team ratings, comments, provenance, and audit history.
+5. Export trusted records and direct PDF links to members' own LLM subscriptions.
+6. Avoid duplicate uploads and repeated reading through DOI, title, citation-key,
+   and Drive checks.
+
+Concept and algorithm notes are legacy secondary content. New submissions always
+use `entry_type: literature`.
+
+## Storage
+
+- Google Drive: original PDFs, grouped by `publication_type`.
+- GitHub `official/`: English Markdown literature records.
+- GitHub `team/`: team accounts and selected research domains.
+- GitHub `index/`: generated machine-readable and Markdown indexes.
+- Vercel `webapp/`: the collaborative UI and serverless APIs.
+
+## Literature schema
+
+The primary metadata fields are:
+
+- `entry_type: literature`
+- `domain`
+- `publication_type`
+- `venue`, `doi`, `citation_key`, `authors`, `year`
+- `tags`
+- `rating`, `ratings`, `comments`
+- PDF provenance and `activity`
+
+See [docs/CARD_SPEC.md](docs/CARD_SPEC.md) for the complete schema and unified
+reading template.
+
+## Workflow
+
+1. Upload a PDF and generate a draft record.
+2. Verify title, authors, year, DOI, venue, domain, publication type, and tags.
+3. Archive the PDF to Drive; the app numbers and renames it consistently.
+4. Gemini reads the archived original PDF to refresh the structured record.
+5. Publish directly to `official/`.
+6. Team members rate and comment from their domain-specific queues.
+7. Export selected records, comments, scores, and PDF links to an external LLM.
+
+## Maintenance
+
+```bash
+pip install -r scripts/requirements.txt
+python scripts/check_cards.py
+python scripts/update_index.py
+python scripts/merge_bibtex.py
 ```
-00_templates/   Card templates 卡片模板 (paper / concept / algorithm / resource / synthesis)
-official/       Approved cards 正式卡片 (flat; organised by domain/type in frontmatter)
-pending/        Legacy drafts only; new app submissions publish directly
-team/           Member accounts, roles and selected research domains
-bib/personal/   Each member's Better BibTeX export 个人 .bib 导出
-bib/library.bib Merged bibliography (generated) 合并书目（自动生成）
-index/          Generated index 自动生成的索引 (cards.json / INDEX.md)
-scripts/        Maintenance scripts 维护脚本 (DOMAINS list lives in scripts/kblib.py)
-docs/           Specs and guides 规范文档
-webapp/         Team web app (Next.js) 团队协作 Web 应用
-```
 
-Cards are stored flat and **organised by `domain` (research field) and `type` via frontmatter** — the web app groups and filters by them. The controlled domain list lives in `scripts/kblib.py` (`DOMAINS`).
-
-## Workflow | 工作流
-
-1. **Prepare source | 准备资料** — upload PDF to Google Drive, normalize the file name.
-2. **Create metadata | 整理元数据** — add the item to Zotero, verify the Better BibTeX citation key, export your personal `.bib` into `bib/personal/<yourname>.bib`.
-3. **Publish card | 发布卡片** — review the generated metadata and English card in the web app, then publish it directly into `official/`.
-4. **Personal queue | 个性化队列** — each member chooses research domains in Settings and sees only matching papers they have not rated.
-5. **Rate & discuss | 评分与评论** — teammates score recommendation, innovation, and rigor, then add attributed comments; History allows rating updates and every change is audited.
-6. **Maintain & reuse | 维护与复用** — CI regenerates `index/` and `bib/library.bib` on every merge. Browse and search via the web app.
-
-## Scripts | 脚本
-
-Requires Python 3.10+ and `pip install -r scripts/requirements.txt`.
-
-| Script | Purpose |
-|---|---|
-| `python scripts/check_cards.py` | Validate all cards (frontmatter, enums, duplicates, broken links) 校验卡片 |
-| `python scripts/update_index.py` | Regenerate `index/cards.json` + `index/INDEX.md` 重建索引 |
-| `python scripts/merge_bibtex.py` | Merge `bib/personal/*.bib` into `bib/library.bib` 合并书目 |
-| `python scripts/promote.py` | Move `status: official` cards out of `90_pending/` 晋升卡片 |
-
-CI runs `check_cards.py` on every pull request and the other three after every merge to `main` — you normally never run `promote.py` by hand.
-
-## Card spec | 卡片规范
-
-See [docs/CARD_SPEC.md](docs/CARD_SPEC.md) for the frontmatter schema, naming rules and bilingual section layout.
-
-## Web app | 协作应用
-
-`webapp/` contains a Next.js app: browse / search the library, review queue, and a new-card wizard with DOI metadata lookup and LLM drafting. See [webapp/README.md](webapp/README.md) for setup and deployment.
+CI validates records, rebuilds indexes, merges bibliographies, bumps the web app
+patch version, and triggers Vercel deployment after changes reach `main`.

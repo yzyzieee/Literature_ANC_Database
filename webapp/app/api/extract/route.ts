@@ -1,44 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { llmChat, llmConfigured, llmProvider, parseJsonLoose } from "@/lib/llm";
 import { driveConfigured, fetchDriveFile } from "@/lib/google";
-import { DOMAINS, SOURCE_TYPES } from "@/lib/types";
+import { DOMAINS, PUBLICATION_TYPES } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const TYPES = ["paper", "concept", "algorithm", "resource", "synthesis"];
 const MAX_INPUT_CHARS = 60000;
-const MAX_TOKENS = 6000;
+const MAX_TOKENS = 7000;
 
-const SECTIONS: Record<string, string> = {
-  paper: "## Summary, ## Key points, ## Method, ## Results, ## My notes, ## References",
-  concept: "## Summary, ## Key points, ## Intuition, ## Math, ## My notes, ## References",
-  algorithm:
-    "## Summary, ## Key points, ## Method, ## When to use, ## Implementation notes, ## My notes, ## References",
-  resource: "## Summary, ## Key points, ## When to use, ## How to get it, ## My notes, ## References",
-  synthesis: "## Summary, ## Key points, ## Landscape, ## Open questions, ## My notes, ## References",
-};
-
-const CARD_JSON_SCHEMA = {
+const LITERATURE_JSON_SCHEMA = {
   type: "object",
   properties: {
-    type: { type: "string", enum: TYPES },
+    entry_type: { type: "string", enum: ["literature"] },
     domain: { type: "string", enum: DOMAINS },
-    source_type: { type: "string", enum: SOURCE_TYPES },
+    publication_type: { type: "string", enum: PUBLICATION_TYPES },
     title: { type: "string" },
     authors: { type: "array", items: { type: "string" } },
     year: { anyOf: [{ type: "integer" }, { type: "null" }] },
+    venue: { type: "string" },
+    doi: { type: "string" },
+    abstract: { type: "string" },
     tags: { type: "array", items: { type: "string" } },
     citation_key: { type: "string" },
     body: { type: "string" },
   },
   required: [
-    "type",
+    "entry_type",
     "domain",
-    "source_type",
+    "publication_type",
     "title",
     "authors",
     "year",
+    "venue",
+    "doi",
+    "abstract",
     "tags",
     "citation_key",
     "body",
@@ -49,19 +45,30 @@ const CARD_JSON_SCHEMA = {
 function buildSystem(fromOriginal: boolean): string {
   return [
     fromOriginal
-      ? "You read the original PDF of a research document, including its figures, equations, and tables, for an audio research knowledge base."
-      : "You process the extracted text of a research document for an audio research knowledge base.",
-    "Classify the document, then produce one English knowledge card.",
-    `Allowed types (knowledge kind): ${TYPES.join(", ")}. Most journal and conference articles are "paper".`,
-    `Allowed domains (research field; pick the single best fit): ${DOMAINS.join(", ")}. Use "other" only if none fit.`,
-    `Allowed source_type (document kind): ${SOURCE_TYPES.join(", ")}.`,
-    "Return the fields required by the provided JSON schema.",
-    "Tags must be 2-4 lowercase kebab-case keywords ordered broad to narrow. Never include years or author names.",
+      ? "You read the original PDF, including figures, equations, and tables, for an audio research group's literature hub."
+      : "You process extracted document text for an audio research group's literature hub.",
+    "Produce one structured English literature record. entry_type must always be literature.",
+    `Allowed domains (pick the single best fit): ${DOMAINS.join(", ")}. Use other only if none fit.`,
+    `Allowed publication_type values: ${PUBLICATION_TYPES.join(", ")}.`,
+    "Classify journal articles, conference papers, preprints, review papers, books, chapters, patents, theses, technical reports, and dataset papers carefully.",
+    "Extract venue, DOI, year, authors, and the paper's abstract when present. Use an empty string rather than inventing missing metadata.",
+    "Return every field required by the provided JSON schema.",
+    "Tags must be 3-6 specific lowercase kebab-case technical keywords ordered broad to narrow.",
+    "Never use years, author names, or generic tags such as audio, paper, research, or signal-processing.",
     "Use a Better-BibTeX-style citation_key: first author surname + year + first significant title word.",
-    "Use this section structure for the body:",
-    ...Object.entries(SECTIONS).map(([type, sections]) => `  ${type}: ${sections}`),
-    "Write clear standard academic English. If a number or claim is uncertain, write (TODO: verify) rather than inventing it.",
-    "Keep the body compact, targeting 700-1200 words. The draft is human-reviewed before entering the library.",
+    "Use exactly this body structure:",
+    "## Summary",
+    "## Problem",
+    "## Method",
+    "## Key results",
+    "## Strengths",
+    "## Limitations",
+    "## Relevance to our group",
+    "## Notes",
+    "## References",
+    "Summary is one compact paragraph. Separate source-grounded findings from team-facing interpretation.",
+    "Write clear standard academic English. Mark uncertain claims with (TODO: verify) instead of inventing them.",
+    "Target 700-1400 words. A human reviews the record before publication.",
   ].join("\n");
 }
 
@@ -72,7 +79,7 @@ interface GeminiPart {
 
 async function geminiStructured(parts: GeminiPart[], system: string): Promise<string> {
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-  const res = await fetch(
+  const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
       method: "POST",
@@ -82,16 +89,18 @@ async function geminiStructured(parts: GeminiPart[], system: string): Promise<st
         contents: [{ parts }],
         generationConfig: {
           responseMimeType: "application/json",
-          responseJsonSchema: CARD_JSON_SCHEMA,
+          responseJsonSchema: LITERATURE_JSON_SCHEMA,
           maxOutputTokens: MAX_TOKENS,
           temperature: 0.2,
         },
       }),
     },
   );
-  if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!response.ok) {
+    throw new Error(`gemini ${response.status}: ${(await response.text()).slice(0, 300)}`);
+  }
 
-  const data = await res.json();
+  const data = await response.json();
   const candidate = data.candidates?.[0];
   const finishReason = candidate?.finishReason;
   const text =
@@ -109,57 +118,68 @@ async function geminiStructured(parts: GeminiPart[], system: string): Promise<st
   if (finishReason && finishReason !== "STOP") {
     throw new Error(
       finishReason === "MAX_TOKENS"
-        ? "Gemini output was truncated. Try again; the response limit has been increased."
+        ? "Gemini output was truncated. Try again."
         : `Gemini stopped early (${finishReason}).`,
     );
   }
   return text;
 }
 
-function shapeCard(card: Record<string, unknown>) {
-  const type = TYPES.includes(String(card.type)) ? String(card.type) : "paper";
-  const domain = DOMAINS.includes(String(card.domain)) ? String(card.domain) : "other";
-  const sourceType = SOURCE_TYPES.includes(String(card.source_type) as never)
-    ? String(card.source_type)
+function normalizedTag(value: unknown): string {
+  return String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function shapeLiterature(record: Record<string, unknown>) {
+  const domain = DOMAINS.includes(String(record.domain)) ? String(record.domain) : "other";
+  const publicationType = PUBLICATION_TYPES.includes(String(record.publication_type) as never)
+    ? String(record.publication_type)
     : "other";
-  const tags = Array.isArray(card.tags)
-    ? card.tags
-        .map((tag) =>
-          String(tag)
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, ""),
+  const tags = Array.isArray(record.tags)
+    ? [...new Set(record.tags.map(normalizedTag))]
+        .filter(
+          (tag) =>
+            tag &&
+            !/^\d{4}$/.test(tag) &&
+            !["audio", "paper", "research", "signal-processing"].includes(tag),
         )
-        .filter((tag) => tag && !/^\d{4}$/.test(tag))
-        .slice(0, 4)
+        .slice(0, 6)
     : [];
 
   const shaped = {
-    type,
+    entry_type: "literature",
     domain,
-    source_type: sourceType,
-    title: String(card.title ?? ""),
-    authors: Array.isArray(card.authors) ? card.authors.map(String) : [],
-    year: card.year ? Number(card.year) : null,
+    publication_type: publicationType,
+    title: String(record.title ?? ""),
+    authors: Array.isArray(record.authors) ? record.authors.map(String) : [],
+    year: record.year ? Number(record.year) : null,
+    venue: String(record.venue ?? ""),
+    doi: String(record.doi ?? ""),
+    abstract: String(record.abstract ?? ""),
     tags,
-    citation_key: String(card.citation_key ?? ""),
-    body: String(card.body ?? ""),
+    citation_key: String(record.citation_key ?? ""),
+    body: String(record.body ?? ""),
   };
   if (!shaped.title.trim() || !shaped.body.trim()) {
-    throw new Error("The model returned an incomplete card (missing title or body).");
+    throw new Error("The model returned an incomplete literature record (missing title or body).");
   }
   return shaped;
 }
 
-function invalidCardResponse(raw: string, error: unknown, provider: string) {
+function invalidRecordResponse(raw: string, error: unknown, provider: string) {
   const message = error instanceof Error ? error.message : String(error);
-  console.warn("LLM card JSON parse failed", {
+  console.warn("LLM literature JSON parse failed", {
     provider,
     rawLength: raw.length,
     error: message,
   });
-  return NextResponse.json({ error: `The model returned an invalid card: ${message}` }, { status: 502 });
+  return NextResponse.json(
+    { error: `The model returned an invalid literature record: ${message}` },
+    { status: 502 },
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -182,21 +202,21 @@ export async function POST(req: NextRequest) {
       raw = await geminiStructured(
         [
           { inlineData: { mimeType: "application/pdf", data: pdf.toString("base64") } },
-          { text: "Produce the knowledge card now." },
+          { text: "Produce the literature record now." },
         ],
         buildSystem(true),
       );
     } catch (error) {
       return NextResponse.json(
-        { error: `Vision read failed: ${error instanceof Error ? error.message : error}` },
+        { error: `Original-PDF analysis failed: ${error instanceof Error ? error.message : error}` },
         { status: 502 },
       );
     }
 
     try {
-      return NextResponse.json(shapeCard(parseJsonLoose(raw)));
+      return NextResponse.json(shapeLiterature(parseJsonLoose(raw)));
     } catch (error) {
-      return invalidCardResponse(raw, error, "gemini-vision");
+      return invalidRecordResponse(raw, error, "gemini-original-pdf");
     }
   }
 
@@ -208,7 +228,7 @@ export async function POST(req: NextRequest) {
   }
   if (!text || text.trim().length < 80) {
     return NextResponse.json(
-      { error: "No usable text was extracted from the PDF. It may be a scanned or image-only document." },
+      { error: "No usable text was extracted from the PDF. It may be scanned or image-only." },
       { status: 400 },
     );
   }
@@ -233,8 +253,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    return NextResponse.json(shapeCard(parseJsonLoose(raw)));
+    return NextResponse.json(shapeLiterature(parseJsonLoose(raw)));
   } catch (error) {
-    return invalidCardResponse(raw, error, llmProvider());
+    return invalidRecordResponse(raw, error, llmProvider());
   }
 }

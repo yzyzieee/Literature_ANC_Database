@@ -10,13 +10,14 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 
 # Flat storage: cards live in official/ once approved, pending/ while in review.
-# Organisation by domain/type is metadata-driven (the web app groups by it).
+# Organisation by domain/publication type is metadata-driven.
 OFFICIAL_DIR = "official"
 PENDING_DIR = "pending"
 CARD_DIRS = [OFFICIAL_DIR, PENDING_DIR]
 
-# Knowledge-unit kind.
-TYPES = {"concept", "algorithm", "paper", "resource", "synthesis"}
+# New records are literature-first. Legacy note types remain readable during migration.
+ENTRY_TYPES = {"literature"}
+LEGACY_TYPES = {"concept", "algorithm", "resource", "synthesis"}
 STATUSES = {"pending", "reviewed", "official"}
 
 # Research domain (the primary organising axis). Edit this list to fit the group.
@@ -34,8 +35,20 @@ DOMAINS = [
     "other",
 ]
 
-# Physical document kind (used for the Drive subfolder, optional on a card).
-SOURCE_TYPES = {"paper", "conference", "book", "patent", "other"}
+# Publication kind, also used for the Drive subfolder.
+PUBLICATION_TYPES = {
+    "journal-paper",
+    "conference-paper",
+    "preprint",
+    "review-paper",
+    "book",
+    "book-chapter",
+    "patent",
+    "thesis",
+    "technical-report",
+    "dataset-paper",
+    "other",
+}
 
 
 def utf8_stdout() -> None:

@@ -30,11 +30,27 @@ export async function GET(req: NextRequest) {
     .replace(/[^a-z\s]/g, "")
     .split(/\s+/)
     .find((w) => w.length > 3 && !["with", "from", "this", "that", "using"].includes(w)) ?? "paper";
+  const crossrefType = String(work.type || "");
+  const publicationType =
+    crossrefType === "proceedings-article"
+      ? "conference-paper"
+      : crossrefType === "journal-article"
+        ? "journal-paper"
+        : crossrefType === "book-chapter"
+          ? "book-chapter"
+          : crossrefType === "book"
+            ? "book"
+            : crossrefType === "dissertation"
+              ? "thesis"
+              : crossrefType === "report"
+                ? "technical-report"
+                : "other";
   return NextResponse.json({
     title,
     authors,
     year,
     venue: work["container-title"]?.[0] ?? "",
+    publication_type: publicationType,
     citation_key: `${firstFamily}${year ?? ""}${firstWord}`,
     doi,
   });

@@ -1,97 +1,111 @@
-# Card specification
+# Literature record specification
 
-Every card is a single Markdown file with YAML frontmatter. One card = one fact-unit of knowledge (a paper, a concept, an algorithm, a resource, or a synthesis across cards). Cards are written in standard academic English.
+Audio Literature Hub is a paper-first literature management system for a research group.
+PDFs are archived in Google Drive; structured literature records are stored as Markdown
+in this repository.
 
-Cards are stored flat: `pending/` while in review, `official/` once approved. They are **organised by domain and type via frontmatter** (the web app groups and filters by it) — not by folder.
+Legacy concept and algorithm notes remain readable during migration, but they are not
+part of the main Library, Ratings, or Export workflow. Every new record uses
+`entry_type: literature`.
 
 ## Frontmatter schema
 
 ```yaml
 ---
-title: Adaptive noise cancelling: principles and applications   # required
-type: paper            # paper | concept | algorithm | resource | synthesis (required)
-domain: active-noise-control   # required — one of the DOMAINS in scripts/kblib.py
-source_type: paper     # paper | conference | book | patent | other (optional; the Drive doc kind)
-status: official       # new app submissions publish directly as official
-citation_key: widrow1975adaptive   # Better BibTeX key — required for type: paper
-authors: [B. Widrow, J. R. Glover] # required for paper
-year: 1975                         # required for paper
-tags: [anc, adaptive-filter, lms]  # domain keywords, broad -> narrow (required, >=1)
-drive: []              # Google Drive links to PDFs / data / audio
-related: []            # slugs of related cards, e.g. [fxlms, active-noise-control]
-created: 2026-06-12    # YYYY-MM-DD (required)
-reviewed_by: []        # GitHub usernames of reviewers
-rating: null           # aggregate team score, added after the first rating
-ratings: []            # current individual ratings; the same account replaces its prior entry
-comments: []           # attributed member comments; multiple comments per member allowed
-uploaded_by: YZY       # account that published the card
+title: Adaptive noise cancelling: principles and applications
+entry_type: literature
+publication_type: journal-paper
+domain: active-noise-control
+venue: Proceedings of the IEEE
+doi: 10.1109/PROC.1975.10036
+abstract: ""
+status: official
+citation_key: widrow1975adaptive
+authors: [B. Widrow, J. R. Glover]
+year: 1975
+tags: [anc, adaptive-filter, lms]
+drive: []
+related: []
+created: 2026-06-12
+reviewed_by: []
+rating: null
+ratings: []
+comments: []
+uploaded_by: YZY
 uploaded_at: 2026-06-14T12:00:00.000Z
-pdf_uploaded_by: YZY   # original PDF uploader (or original owner when reused)
+pdf_uploaded_by: YZY
 pdf_uploaded_at: 2026-06-14T11:55:00.000Z
 pdf_file_name: 0001_widrow1975adaptive.pdf
 pdf_reused: false
-activity: []           # append-only PDF, publication, and rating audit events
+activity: []
 ---
 ```
 
-## Field rules
+## Controlled fields
 
-- **type** — the knowledge-unit kind. **domain** — the research field (primary organising axis). They are independent: a `paper` in `active-noise-control`, a `concept` in `speech-enhancement`, etc.
-- **tags** — lowercase kebab-case domain keywords, ordered **broad → narrow** (e.g. `[anc, adaptive-filter, lms]`). **Not** years, **not** author names — the year lives in `year`, authors in `authors`.
-- **domain** — must be one of the controlled list in `scripts/kblib.py` (`DOMAINS`). Edit that list to add a field.
+### `domain`
 
-## Naming rules
+- `active-noise-control`
+- `acoustic-echo-cancellation`
+- `speech-enhancement`
+- `source-separation`
+- `beamforming-arrays`
+- `spatial-audio`
+- `audio-coding`
+- `room-acoustics`
+- `machine-learning-audio`
+- `fundamentals-dsp`
+- `other`
 
-- File name = slug = `citation_key` for papers, lowercase-kebab-case English for everything else. Unique across the repo.
-- Wiki links in the body — `[[slug]]` — must point to an existing card slug.
+Domain is the primary organization axis. It controls personal rating queues.
 
-## Team rating
+### `publication_type`
 
-The app publishes checked cards directly into `official/`. Members then rate literature on three 1–5 dimensions:
+- `journal-paper`
+- `conference-paper`
+- `preprint`
+- `review-paper`
+- `book`
+- `book-chapter`
+- `patent`
+- `thesis`
+- `technical-report`
+- `dataset-paper`
+- `other`
 
-- recommendation
-- innovation
-- rigor
+Publication type also determines the Google Drive archive subfolder.
 
-The three team averages are equally weighted and converted to a 0–100 `rating.weight`. Current individual entries are stored in `ratings`; submitting again from the same signed-in account updates that member's entry. Every addition and update is also appended to `activity`, so rating history remains auditable.
+### `tags`
 
-## Team identity and audit
+Use one to six specific lowercase kebab-case technical topics, ordered broad to
+narrow. Do not use years, author names, or generic labels such as `paper` or
+`research`.
 
-Members select an account at login. The registry and each member's research
-domains live in `team/members.json`. New cards record the publishing account,
-the original or reused Drive PDF owner, timestamps, and file name. The
-append-only `activity` list records `pdf_uploaded`, `pdf_reused`,
-`card_published`, `rating_added`, `rating_updated`, `comment_added`, and
-`comment_updated` events.
+## Naming and duplicate rules
 
-## Team comments
-
-Members can add multiple comments to an official Card. A comment is structured
-metadata so the web app and external LLM exports preserve attribution:
-
-```yaml
-comments:
-  - id: YZY-mabc1234-a1b2c3d4
-    author: YZY
-    body: The secondary-path assumptions need rechecking for our enclosure.
-    created: 2026-06-14T12:30:00.000Z
-    updated: 2026-06-14T12:30:00.000Z
-```
-
-Only the signed-in author can edit a comment. Edits preserve `created`, update
-`updated`, and append an audit event. Comments are team interpretation, not
-claims from the source paper; LLM exports label them accordingly.
+- File name equals `citation_key`.
+- The citation key is lowercase kebab-case compatible.
+- Drive duplicate detection uses DOI and citation key.
+- GitHub publication checks DOI, normalized title, and citation key.
 
 ## Body layout
 
-English, section by section. `Summary` and `Key points` are always required; the rest are type-specific and may be omitted when irrelevant.
+Every new literature record uses the same English structure:
 
 ```markdown
 ## Summary
-## Key points
-## Method        (paper / algorithm)
-## Results        (paper)
-## When to use    (algorithm / resource)
-## My notes
+## Problem
+## Method
+## Key results
+## Strengths
+## Limitations
+## Relevance to our group
+## Notes
 ## References
 ```
+
+## Team evaluation
+
+Members rate recommendation, innovation, and rigor from 1 to 5. The app converts
+the three averages into a 0-100 team weight. Attributed comments and all PDF,
+publication, rating, and comment actions are preserved in the record's audit trail.

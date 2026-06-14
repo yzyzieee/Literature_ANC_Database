@@ -5,8 +5,8 @@ import packageJson from "@/package.json";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Audio Research KB",
-  description: "Collaborative knowledge base for audio / ANC / signal processing",
+  title: "Audio Literature Hub",
+  description: "Paper-first literature management for an audio research group",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

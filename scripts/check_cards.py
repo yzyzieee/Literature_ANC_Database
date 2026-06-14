@@ -1,21 +1,29 @@
-"""Validate every card: frontmatter schema, naming, duplicates, links, status/folder consistency.
-
-Exit code 1 if any error is found (warnings do not fail the build).
-"""
+"""Validate literature records, legacy notes, naming, duplicates, and links."""
 from __future__ import annotations
 
 import re
 import sys
 
-from kblib import (DOMAINS, OFFICIAL_DIR, PENDING_DIR, SOURCE_TYPES, STATUSES,
-                   TYPES, Card, iter_cards, utf8_stdout)
+from kblib import (DOMAINS, ENTRY_TYPES, LEGACY_TYPES, OFFICIAL_DIR,
+                   PENDING_DIR, PUBLICATION_TYPES, STATUSES, Card, iter_cards,
+                   utf8_stdout)
 
-REQUIRED_ALWAYS = ["title", "type", "domain", "status", "tags", "created"]
-REQUIRED_PAPER = ["citation_key", "authors", "year"]
+REQUIRED_ALWAYS = ["title", "domain", "status", "tags", "created"]
+REQUIRED_LITERATURE = ["entry_type", "publication_type", "citation_key", "authors", "year"]
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 TAG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)")
-REQUIRED_SECTIONS = ["## Summary", "## Key points"]
+LITERATURE_SECTIONS = [
+    "## Summary",
+    "## Problem",
+    "## Method",
+    "## Key results",
+    "## Strengths",
+    "## Limitations",
+    "## Relevance to our group",
+    "## Notes",
+    "## References",
+]
 
 
 def main() -> int:
@@ -44,36 +52,53 @@ def main() -> int:
             if not meta.get(key):
                 errors.append(f"{where}: missing required field '{key}'")
 
-        ctype = meta.get("type")
+        entry_type = meta.get("entry_type")
+        legacy_type = meta.get("type")
         domain = meta.get("domain")
-        source_type = meta.get("source_type")
+        publication_type = meta.get("publication_type")
         status = meta.get("status")
-        if ctype and ctype not in TYPES:
-            errors.append(f"{where}: invalid type '{ctype}' (expected one of {sorted(TYPES)})")
+        is_literature = entry_type == "literature"
+
+        if entry_type and entry_type not in ENTRY_TYPES:
+            errors.append(f"{where}: invalid entry_type '{entry_type}'")
+        if not entry_type and legacy_type not in LEGACY_TYPES:
+            errors.append(f"{where}: missing required field 'entry_type'")
+        if legacy_type in LEGACY_TYPES:
+            warnings.append(f"{where}: legacy note is excluded from the paper-first app")
         if domain and domain not in DOMAINS:
             errors.append(f"{where}: invalid domain '{domain}' (expected one of {DOMAINS})")
-        if source_type and source_type not in SOURCE_TYPES:
-            errors.append(f"{where}: invalid source_type '{source_type}' (expected one of {sorted(SOURCE_TYPES)})")
+        if publication_type and publication_type not in PUBLICATION_TYPES:
+            errors.append(
+                f"{where}: invalid publication_type '{publication_type}' "
+                f"(expected one of {sorted(PUBLICATION_TYPES)})")
         if status and status not in STATUSES:
             errors.append(f"{where}: invalid status '{status}' (expected one of {sorted(STATUSES)})")
 
-        if ctype == "paper":
-            for key in REQUIRED_PAPER:
+        if is_literature:
+            for key in REQUIRED_LITERATURE:
                 if not meta.get(key):
-                    errors.append(f"{where}: paper card missing '{key}'")
-            ck = meta.get("citation_key")
-            if ck and ck != card.slug:
-                errors.append(f"{where}: file name must equal citation_key '{ck}'")
+                    errors.append(f"{where}: literature record missing '{key}'")
+            citation_key = meta.get("citation_key")
+            if citation_key and citation_key != card.slug:
+                errors.append(f"{where}: file name must equal citation_key '{citation_key}'")
+            for section in LITERATURE_SECTIONS:
+                if section not in card.body:
+                    errors.append(f"{where}: missing required section '{section}'")
+            positions = [card.body.find(section) for section in LITERATURE_SECTIONS]
+            if all(position >= 0 for position in positions) and positions != sorted(positions):
+                errors.append(f"{where}: literature sections are not in the required order")
 
         tags = meta.get("tags")
         if tags is not None and not isinstance(tags, list):
             errors.append(f"{where}: 'tags' must be a list")
         elif isinstance(tags, list):
+            if is_literature and not 1 <= len(tags) <= 6:
+                errors.append(f"{where}: literature records need 1-6 technical tags")
             for tag in tags:
                 if not TAG_RE.match(str(tag)):
                     errors.append(f"{where}: tag '{tag}' must be lowercase kebab-case")
                 if str(tag).isdigit():
-                    errors.append(f"{where}: tag '{tag}' looks like a year — tags are domain keywords, not years")
+                    errors.append(f"{where}: tag '{tag}' looks like a year; tags are technical topics")
 
         comments = meta.get("comments") or []
         if not isinstance(comments, list):
@@ -98,13 +123,9 @@ def main() -> int:
 
         if card.folder == PENDING_DIR:
             if status == "official":
-                warnings.append(f"{where}: status is official — will be promoted on next merge")
+                warnings.append(f"{where}: status is official; it will be promoted")
         elif status != "official":
             errors.append(f"{where}: card in {OFFICIAL_DIR}/ must have status official")
-
-        for section in REQUIRED_SECTIONS:
-            if section not in card.body:
-                errors.append(f"{where}: missing required section '{section}'")
 
     all_slugs = set(slugs)
     for card in cards:
@@ -115,18 +136,18 @@ def main() -> int:
         if not isinstance(related, list):
             errors.append(f"{where}: 'related' must be a list")
             related = []
-        targets = {str(r) for r in related} | set(WIKILINK_RE.findall(card.body))
+        targets = {str(item) for item in related} | set(WIKILINK_RE.findall(card.body))
         for target in sorted(targets):
             target = target.strip()
             if target and target not in all_slugs:
                 level = warnings if card.folder == PENDING_DIR else errors
                 level.append(f"{where}: link to unknown card '{target}'")
 
-    for msg in warnings:
-        print(f"WARN  {msg}")
-    for msg in errors:
-        print(f"ERROR {msg}")
-    print(f"\nChecked {len(cards)} cards: {len(errors)} error(s), {len(warnings)} warning(s).")
+    for message in warnings:
+        print(f"WARN  {message}")
+    for message in errors:
+        print(f"ERROR {message}")
+    print(f"\nChecked {len(cards)} records: {len(errors)} error(s), {len(warnings)} warning(s).")
     return 1 if errors else 0
 
 

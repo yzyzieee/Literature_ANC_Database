@@ -16,7 +16,7 @@ export interface DriveResult {
 export async function uploadToDrive(
   file: File,
   base: string,
-  sourceType: string,
+  publicationType: string,
   doi = "",
   onProgress?: (percent: number) => void,
 ): Promise<DriveResult> {
@@ -25,7 +25,7 @@ export async function uploadToDrive(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       base,
-      sourceType,
+      publicationType,
       mimeType: file.type || "application/pdf",
       size: file.size,
       doi,

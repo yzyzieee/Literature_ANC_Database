@@ -1,66 +1,54 @@
-# Audio Research KB — Web App
+# Audio Literature Hub Web App
 
-Next.js UI layer over the knowledge-base repo. The repo (markdown cards in the parent folder) is the single source of truth — the app stores nothing itself.
+Next.js interface for the paper-first research-group literature repository.
+Markdown records in the parent repository remain the source of truth.
 
-## Features
+## Main workflows
 
-- **Library** — browse all cards, client-side fuzzy search (title / tags / authors / summary), and research-domain filtering
-- **Card detail** — rendered markdown, `[[wiki-links]]` resolved to card links, Drive links, related cards, one-click "copy for your LLM"
-- **Team ratings** — rate official literature for recommendation, innovation, and rigor; the aggregate 0–100 weight is stored in the card
-- **Team accounts** — choose a member account, save research domains, receive a personal unrated queue, and edit past ratings in History
-- **Audit trail** — record who archived/reused the PDF, who published the card, and every rating addition or update
-- **Team comments** — attach attributed interpretations and implementation notes to literature; members can edit their own comments and LLM exports include them
-- **New-card wizard** — choose a template, auto-fill metadata from a DOI (Crossref), optionally draft the English body with DeepSeek, then publish directly into `official/`
-- **UI language toggle** — one-click EN / 中文 switch in the top-right; cards and classification stay English, only the interface chrome switches
-- **导出 Export** — pick cards, bundle them into a prompt-ready markdown pack (with Drive full-text links and a token estimate) to paste into each member's own ChatGPT / Claude / Kimi — zero team API spend for literature research
+- **Literature library**: fuzzy search plus domain, publication type, year, venue,
+  rating state, team weight, and uploader filters.
+- **New literature**: upload a PDF, extract metadata, choose domain and publication
+  type, archive the original to Drive, and publish a structured record.
+- **Original-PDF analysis**: after Drive upload, Gemini reads the original PDF,
+  including figures, equations, and tables.
+- **Duplicate prevention**: citation key, DOI, normalized title, and Drive metadata.
+- **Ratings**: personal domain queue, history, recommended, innovative, rigorous,
+  and disputed literature views.
+- **Comments and audit**: attributed team comments and append-only activity history.
+- **External LLM export**: bundle records, ratings, comments, GitHub sources, and
+  direct PDF links for ChatGPT, Claude, Kimi, or another subscribed LLM.
+
+Legacy concept and algorithm notes remain directly readable but are excluded from
+the main Library, Ratings, and Export workflows.
 
 ## Local development
 
 ```bash
 cd webapp
 npm install
-npm run dev          # http://localhost:3000
+npm run dev
 ```
 
-The app reads cards from the parent directory by default (`KB_PATH` env to override). No env vars are required for read-only browsing.
+The app reads the repository parent directory by default. Set `KB_PATH` to override.
 
-## Optional integrations (`.env.local`, see `.env.example`)
+## Environment variables
 
-| Variable | Enables |
+| Variable | Purpose |
 |---|---|
-| `GITHUB_TOKEN` + `GITHUB_REPO` | Direct card publishing, team settings, and ratings through the GitHub Contents API. Use a fine-grained PAT with repository Contents read/write. |
-| `DEEPSEEK_API_KEY` (+ `DEEPSEEK_MODEL`) | the "draft with DeepSeek" button. Frugal by design: one capped (3K tokens) non-streaming call per explicit click, nothing automatic. |
-| `AUTH_SECRET` | Long random server-only value used to sign member session cookies. `APP_PASSWORD` is accepted as a backwards-compatible fallback. Changing it signs everyone out. |
-| `NEXT_PUBLIC_GITHUB_REPO` | GitHub links in the UI (edit card, PR list) |
+| `GITHUB_TOKEN` | Fine-grained token with repository Contents read/write |
+| `GITHUB_REPO` | `owner/repository` used for direct publication and updates |
+| `NEXT_PUBLIC_GITHUB_REPO` | Public GitHub links in the UI |
+| `AUTH_SECRET` | Signs team-account session cookies |
+| `LLM_PROVIDER` | `gemini` or another configured provider |
+| `GEMINI_API_KEY` | Structured metadata and original-PDF analysis |
+| `GEMINI_MODEL` | Defaults to `gemini-2.5-flash-lite` |
+| `DRIVE_FOLDER_ID` | Shared Drive root folder |
+| `GOOGLE_*` | Owner OAuth or service-account credentials for Drive |
+| `NEXT_PUBLIC_DRIVE_UPLOAD` | Set to `1` to enable Drive archiving |
+| `NEXT_PUBLIC_DRIVE_FOLDER_URL` | Shared folder link shown in the UI |
 
-The initial registry is `team/members.json` with YZY, JJW, and WBX. YZY is
-the administrator and can add accounts in **Settings**. Each member chooses
-one or more research domains there; Ratings then shows only matching papers
-that member has not rated. History contains prior ratings and allows updates.
-Card detail pages provide attributed comments; these are stored in the Card
-and included in single-card and batch exports for external LLMs.
+## Vercel
 
-Account-name login is convenient identity selection for a trusted team, not
-strong authentication. Add per-member PINs or an OAuth provider before opening
-the deployment to untrusted users.
-
-## Deployment (Vercel)
-
-1. Push the whole repo (knowledge base + `webapp/`) to GitHub.
-2. In Vercel: import the repo, set **Root Directory = `webapp`**.
-3. Add the env vars above in Vercel project settings.
-4. Every merge to `main` redeploys, so the site always reflects the latest cards. Content pages are statically generated at build time (`force-static`).
-
-## Versioning
-
-The app uses semantic versions from `webapp/package.json` and displays the
-current version in the footer. Every non-bot push to `main` automatically bumps
-the patch component (`0.1.0` -> `0.1.1`) in the `Maintain library` workflow,
-commits the updated package files, and triggers the final Vercel deployment.
-For a local/manual bump, run `npm run bump:patch` inside `webapp/`.
-
-## Architecture notes
-
-- Pages read markdown via `lib/kb.ts` (gray-matter) at build time; search runs client-side with Fuse.js over the serialized card index.
-- Write paths never touch the local filesystem: `/api/commit` publishes validated cards directly to `official/`, `/api/rate` updates ratings, `/api/comment` updates attributed comments, and `/api/team` updates `team/members.json`, all using GitHub file SHAs.
-- Rating commits trigger the normal GitHub/Vercel deployment, so the static library reflects the latest team weight after deployment.
+Import the repository with **Root Directory = `webapp`**, configure the Production
+environment variables, and deploy `main`. The footer displays the package version;
+the maintenance workflow increments its patch version after each non-bot push.

@@ -1,6 +1,17 @@
-export type CardType = "concept" | "algorithm" | "paper" | "resource" | "synthesis";
+export type EntryType = "literature" | "legacy-note";
 export type CardStatus = "pending" | "reviewed" | "official";
-export type SourceType = "paper" | "conference" | "book" | "patent" | "other";
+export type PublicationType =
+  | "journal-paper"
+  | "conference-paper"
+  | "preprint"
+  | "review-paper"
+  | "book"
+  | "book-chapter"
+  | "patent"
+  | "thesis"
+  | "technical-report"
+  | "dataset-paper"
+  | "other";
 export type TeamRole = "admin" | "member";
 
 export interface TeamMember {
@@ -52,9 +63,12 @@ export interface CardMeta {
   slug: string;
   folder: string;
   title: string;
-  type: CardType;
+  entry_type: EntryType;
+  publication_type: PublicationType | "";
   domain: string;
-  source_type: string;
+  venue: string;
+  doi: string;
+  abstract: string;
   status: CardStatus;
   tags: string[];
   authors: string[];
@@ -74,19 +88,12 @@ export interface CardMeta {
   pdf_file_name: string;
   pdf_reused: boolean;
   activity: ActivityEntry[];
+  legacy_type: string;
 }
 
 export interface Card extends CardMeta {
   body: string;
 }
-
-export const TYPE_LABELS: Record<CardType, string> = {
-  concept: "Concept",
-  algorithm: "Algorithm",
-  paper: "Paper",
-  resource: "Resource",
-  synthesis: "Synthesis",
-};
 
 export const STATUS_LABELS: Record<CardStatus, string> = {
   pending: "pending",
@@ -94,7 +101,37 @@ export const STATUS_LABELS: Record<CardStatus, string> = {
   official: "official",
 };
 
-export const SOURCE_TYPES: SourceType[] = ["paper", "conference", "book", "patent", "other"];
+export const PUBLICATION_TYPES: PublicationType[] = [
+  "journal-paper",
+  "conference-paper",
+  "preprint",
+  "review-paper",
+  "book",
+  "book-chapter",
+  "patent",
+  "thesis",
+  "technical-report",
+  "dataset-paper",
+  "other",
+];
+
+export const PUBLICATION_TYPE_LABELS: Record<PublicationType, string> = {
+  "journal-paper": "Journal paper",
+  "conference-paper": "Conference paper",
+  preprint: "Preprint",
+  "review-paper": "Review paper",
+  book: "Book",
+  "book-chapter": "Book chapter",
+  patent: "Patent",
+  thesis: "Thesis",
+  "technical-report": "Technical report",
+  "dataset-paper": "Dataset paper",
+  other: "Other",
+};
+
+export function publicationTypeLabel(value: string): string {
+  return PUBLICATION_TYPE_LABELS[value as PublicationType] || value || "Unspecified";
+}
 
 // Research domains — keep in sync with scripts/kblib.py DOMAINS.
 export const DOMAINS: string[] = [
@@ -127,4 +164,8 @@ export const DOMAIN_LABELS: Record<string, string> = {
 
 export function domainLabel(d: string): string {
   return DOMAIN_LABELS[d] || d || "Unsorted";
+}
+
+export function isLiterature(card: Pick<CardMeta, "entry_type">): boolean {
+  return card.entry_type === "literature";
 }

@@ -28,7 +28,7 @@ export default function SiteHeader({ repo }: { repo?: string }) {
 
   return (
     <header className="topnav">
-      <Link href="/" className="brand">🎧 Audio Research KB</Link>
+      <Link href="/" className="brand">🎧 Audio Literature Hub</Link>
       <nav>
         {!onLogin && (
           <>

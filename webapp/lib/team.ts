@@ -6,7 +6,14 @@ export const TEAM_FILE = "team/members.json";
 export const DEFAULT_TEAM: TeamConfig = {
   version: 1,
   members: [
-    { id: "YZY", name: "YZY", role: "admin", domains: [], active: true, created: "2026-06-14" },
+    {
+      id: "YZY",
+      name: "YZY",
+      role: "admin",
+      domains: ["active-noise-control", "machine-learning-audio"],
+      active: true,
+      created: "2026-06-14",
+    },
     { id: "JJW", name: "JJW", role: "member", domains: [], active: true, created: "2026-06-14" },
     { id: "WBX", name: "WBX", role: "member", domains: [], active: true, created: "2026-06-14" },
   ],

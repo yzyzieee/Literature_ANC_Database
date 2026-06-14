@@ -120,7 +120,9 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
   const { t } = useLang();
   const [member, setMember] = useState<TeamMember | null>(null);
   const [cards, setCards] = useState(initialCards);
-  const [tab, setTab] = useState<"queue" | "history">("queue");
+  const [view, setView] = useState<
+    "queue" | "history" | "recommended" | "innovative" | "rigorous" | "disputed"
+  >("queue");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -145,10 +147,41 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
     if (!member) return [];
     return cards.filter((card) => card.ratings.some((rating) => rating.reviewer === member.id));
   }, [cards, member]);
+  const domainCards = useMemo(
+    () => (member ? cards.filter((card) => member.domains.includes(card.domain)) : []),
+    [cards, member],
+  );
+  const recommended = useMemo(
+    () => domainCards
+      .filter((card) => (card.rating?.recommendation || 0) >= 4)
+      .sort((a, b) => (b.rating?.recommendation || 0) - (a.rating?.recommendation || 0)),
+    [domainCards],
+  );
+  const innovative = useMemo(
+    () => domainCards
+      .filter((card) => (card.rating?.innovation || 0) >= 4)
+      .sort((a, b) => (b.rating?.innovation || 0) - (a.rating?.innovation || 0)),
+    [domainCards],
+  );
+  const rigorous = useMemo(
+    () => domainCards
+      .filter((card) => (card.rating?.rigor || 0) >= 4)
+      .sort((a, b) => (b.rating?.rigor || 0) - (a.rating?.rigor || 0)),
+    [domainCards],
+  );
+  const disputed = useMemo(
+    () => domainCards.filter((card) =>
+      (["recommendation", "innovation", "rigor"] as const).some((key) => {
+        const values = card.ratings.map((rating) => rating[key]);
+        return values.length > 1 && Math.max(...values) - Math.min(...values) >= 2;
+      }),
+    ),
+    [domainCards],
+  );
 
   const onSaved = (slug: string, rating: RatingAggregate, ratings: RatingEntry[]) => {
     setCards((current) => current.map((card) => card.slug === slug ? { ...card, rating, ratings } : card));
-    setTab("history");
+    setView("history");
   };
 
   if (error) return <div className="notice warn">{error}</div>;
@@ -161,7 +194,15 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
     );
   }
 
-  const shown = tab === "queue" ? queue : history;
+  const views = {
+    queue,
+    history,
+    recommended,
+    innovative,
+    rigorous,
+    disputed,
+  };
+  const shown = views[view];
   return (
     <>
       <div className="review-profile">
@@ -170,11 +211,23 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
         <Link href="/settings">{t("review.editDomains")}</Link>
       </div>
       <div className="review-tabs">
-        <button className={tab === "queue" ? "active" : ""} onClick={() => setTab("queue")}>
+        <button className={view === "queue" ? "active" : ""} onClick={() => setView("queue")}>
           {t("review.queue")} ({queue.length})
         </button>
-        <button className={tab === "history" ? "active" : ""} onClick={() => setTab("history")}>
+        <button className={view === "history" ? "active" : ""} onClick={() => setView("history")}>
           {t("review.history")} ({history.length})
+        </button>
+        <button className={view === "recommended" ? "active" : ""} onClick={() => setView("recommended")}>
+          {t("review.recommended")} ({recommended.length})
+        </button>
+        <button className={view === "innovative" ? "active" : ""} onClick={() => setView("innovative")}>
+          {t("review.innovative")} ({innovative.length})
+        </button>
+        <button className={view === "rigorous" ? "active" : ""} onClick={() => setView("rigorous")}>
+          {t("review.rigorous")} ({rigorous.length})
+        </button>
+        <button className={view === "disputed" ? "active" : ""} onClick={() => setView("disputed")}>
+          {t("review.disputed")} ({disputed.length})
         </button>
       </div>
       <div className="rating-list">
@@ -183,7 +236,13 @@ export default function ReviewRatings({ cards: initialCards }: { cards: CardMeta
         ))}
       </div>
       {!shown.length && (
-        <p className="subtitle">{tab === "queue" ? t("review.queueEmpty") : t("review.historyEmpty")}</p>
+        <p className="subtitle">
+          {view === "queue"
+            ? t("review.queueEmpty")
+            : view === "history"
+              ? t("review.historyEmpty")
+              : t("review.viewEmpty")}
+        </p>
       )}
     </>
   );
